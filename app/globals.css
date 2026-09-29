@@ -1,0 +1,602 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #1c1c1c;
+  --canvas: #f5f5f7;
+  --panel: #f4f4f6;
+  --card: #ffffff;
+  --card-elevated: #ffffff;
+  --fg: #1d1d1f;
+  --line: rgba(0, 0, 0, 0.08);
+  --hairline: rgba(0, 0, 0, 0.06);
+  --hover: rgba(0, 0, 0, 0.04);
+  --hover-strong: rgba(0, 0, 0, 0.08);
+  --brand: #fd4e00;
+  --brand-hover: #e04500;
+  --brand-pressed: #c43c00;
+  --accent: #fd4e00;
+  --accent-fg: #ffffff;
+  --accent-soft: rgba(253, 78, 0, 0.1);
+  --accent-muted: rgba(253, 78, 0, 0.16);
+  --accent-ring: rgba(253, 78, 0, 0.35);
+  --btn: #1d1d1f;
+  --btn-fg: #ffffff;
+  --shadow: 0 10px 28px rgba(0, 0, 0, 0.08);
+  --rail: #fafafa;
+  --canvas-fill: #f4f4f6;
+  --canvas-dot: rgba(0, 0, 0, 0.13);
+  --idle-dot: rgba(0, 0, 0, 0.28);
+  --preview-glow: rgba(255, 255, 255, 0.7);
+  --preview-dot: rgba(0, 0, 0, 0.16);
+  --preview-face: #f3f3f5;
+  color-scheme: light;
+}
+
+/* Matte near-black. Tokens the project UI already uses flip with these. */
+html.dark {
+  --background: #090909;
+  --foreground: #f2f2f2;
+  --canvas: #090909;
+  --panel: #101010;
+  --card: #141414;
+  --card-elevated: #1a1a1a;
+  --fg: #f3f3f3;
+  --line: rgba(255, 255, 255, 0.08);
+  --hairline: rgba(255, 255, 255, 0.06);
+  --hover: rgba(255, 255, 255, 0.05);
+  --hover-strong: rgba(255, 255, 255, 0.09);
+  --btn: #f2f2f2;
+  --btn-fg: #141414;
+  --shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+  --rail: #0e0e0e;
+  --canvas-fill: #090909;
+  --canvas-dot: rgba(255, 255, 255, 0.16);
+  --idle-dot: rgba(255, 255, 255, 0.32);
+  --preview-glow: rgba(255, 255, 255, 0.05);
+  --preview-dot: rgba(255, 255, 255, 0.16);
+  --preview-face: #1a1a1a;
+  --color-rose-50: rgba(251, 113, 133, 0.12);
+  --color-rose-200: rgba(251, 113, 133, 0.28);
+  --color-rose-700: #fb7185;
+  --color-rose-800: #fda4af;
+  --color-emerald-700: #6ee7b7;
+  --color-emerald-800: #6ee7b7;
+  --color-amber-800: #fbbf24;
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-canvas: var(--canvas);
+  --color-panel: var(--panel);
+  --color-card: var(--card);
+  --color-card-elevated: var(--card-elevated);
+  --color-fg: var(--fg);
+  --color-line: var(--line);
+  --color-hairline: var(--hairline);
+  --color-hover: var(--hover);
+  --color-hover-strong: var(--hover-strong);
+  --color-brand: var(--brand);
+  --color-brand-hover: var(--brand-hover);
+  --color-brand-pressed: var(--brand-pressed);
+  --color-accent: var(--accent);
+  --color-accent-fg: var(--accent-fg);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-muted: var(--accent-muted);
+  --color-accent-ring: var(--accent-ring);
+  --color-btn: var(--btn);
+  --color-btn-fg: var(--btn-fg);
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+@utility scrollbar-none {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Sign-in stays light even when the workspace theme is dark. */
+.auth-field {
+  color-scheme: light;
+  background-color: #fff;
+  color: #1c1c1c;
+}
+
+.auth-field:hover {
+  border-color: #d2d2d7;
+}
+
+.auth-field:focus {
+  border-color: #fd4e00;
+  box-shadow: 0 0 0 4px rgba(253, 78, 0, 0.12);
+}
+
+.auth-field:-webkit-autofill,
+.auth-field:-webkit-autofill:hover {
+  -webkit-text-fill-color: #1c1c1c;
+  caret-color: #1c1c1c;
+  box-shadow: 0 0 0 1000px #fff inset;
+}
+
+.auth-field:-webkit-autofill:focus {
+  -webkit-text-fill-color: #1c1c1c;
+  caret-color: #1c1c1c;
+  border-color: #fd4e00;
+  box-shadow: 0 0 0 1000px #fff inset, 0 0 0 4px rgba(253, 78, 0, 0.12);
+}
+
+/* Dark mode remaps the shared light palette. Sign-in stays that light palette. */
+html.dark .auth-light {
+  background-color: #fff !important;
+  color: #1c1c1c !important;
+}
+
+html.dark .auth-light .bg-white {
+  background-color: #fff !important;
+}
+
+html.dark .auth-light .text-\[\#1c1c1c\] {
+  color: #1c1c1c !important;
+}
+
+html.dark .auth-light .text-\[\#6a6a6a\] {
+  color: #6a6a6a !important;
+}
+
+html.dark .auth-light .text-\[\#8a8a8a\] {
+  color: #8a8a8a !important;
+}
+
+html.dark .auth-light .text-\[\#9a9a9a\] {
+  color: #9a9a9a !important;
+}
+
+html.dark .auth-light .text-\[\#6e6e73\] {
+  color: #6e6e73 !important;
+}
+
+html.dark .auth-light .text-\[\#3a3a3c\] {
+  color: #3a3a3c !important;
+}
+
+html.dark .auth-light .placeholder\:text-\[\#b0b0b0\]::placeholder,
+html.dark .auth-light .placeholder\:text-\[\#aeaeb2\]::placeholder {
+  color: #aeaeb2 !important;
+}
+
+html.dark .auth-light .border-\[\#e6e6e6\] {
+  border-color: #e6e6e6 !important;
+}
+
+html.dark .auth-light .auth-field:hover {
+  border-color: #d2d2d7 !important;
+}
+
+html.dark .auth-light .auth-field:focus,
+html.dark .auth-light .auth-field:-webkit-autofill:focus {
+  border-color: #fd4e00 !important;
+}
+
+html.dark .auth-light .bg-\[\#161616\] {
+  background-color: #161616 !important;
+  color: #fff !important;
+}
+
+html.dark .auth-light .hover\:bg-black:hover {
+  background-color: #000 !important;
+  color: #fff !important;
+}
+
+html.dark .auth-light .hover\:bg-\[\#f4f4f4\]:hover {
+  background-color: #f4f4f4 !important;
+}
+
+@keyframes runex-inspector-in {
+  from {
+    transform: translate3d(18px, 0, 0);
+    opacity: 0.92;
+  }
+  to {
+    transform: translate3d(0, 0, 0);
+    opacity: 1;
+  }
+}
+
+@keyframes runex-inspector-sheet {
+  from {
+    transform: translate3d(0, 18px, 0);
+    opacity: 0.92;
+  }
+  to {
+    transform: translate3d(0, 0, 0);
+    opacity: 1;
+  }
+}
+
+.harbor-inspector {
+  animation: runex-inspector-in 200ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  box-shadow: -1px 0 0 rgba(0, 0, 0, 0.05), -18px 0 40px rgba(0, 0, 0, 0.04);
+  background: var(--card);
+}
+
+@media (max-width: 767px) {
+  .harbor-inspector {
+    animation: none;
+    box-shadow: none;
+    touch-action: pan-y;
+  }
+}
+
+.harbor-zoom-dock {
+  right: 12px;
+  transition: right 200ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@media (min-width: 768px) {
+  .harbor-zoom-dock {
+    right: calc(12px + var(--harbor-inspector-inset, 0px));
+  }
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+}
+
+@layer base {
+  button,
+  [role="button"] {
+    cursor: pointer;
+  }
+}
+
+/* While a drag is active the cursor has to win over every control under the pointer. */
+html.runex-grabbing,
+html.runex-grabbing * {
+  cursor: grabbing !important;
+}
+
+html.runex-col-resize,
+html.runex-col-resize * {
+  cursor: col-resize !important;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(28, 28, 28, 0.28) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: rgba(28, 28, 28, 0.22);
+  background-clip: padding-box;
+  border: 3px solid transparent;
+  border-radius: 999px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(28, 28, 28, 0.4);
+}
+
+.overflow-y-auto,
+.overflow-x-auto,
+.overflow-auto {
+  scroll-behavior: smooth;
+}
+
+.runex-canvas {
+  animation: runex-in 180ms ease;
+}
+
+@keyframes runex-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* First frame keeps the saved shell still. Motion starts only after that paint. */
+[data-motion="off"],
+[data-motion="off"] * {
+  transition: none !important;
+  animation: none !important;
+}
+
+html.dark .harbor-inspector {
+  box-shadow: -1px 0 0 rgba(255, 255, 255, 0.06), -24px 0 48px rgba(0, 0, 0, 0.5);
+}
+
+html.dark * {
+  scrollbar-color: rgba(255, 255, 255, 0.22) transparent;
+}
+
+html.dark *::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.18);
+}
+
+html.dark *::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 255, 255, 0.32);
+}
+
+/* Surfaces that still use the light hex palette. */
+html.dark .bg-white,
+html.dark .hover\:bg-white:hover {
+  background-color: #141414;
+}
+
+html.dark .bg-white\/75 {
+  background-color: rgba(20, 20, 20, 0.88);
+}
+
+html.dark .bg-white\/95 {
+  background-color: rgba(20, 20, 20, 0.96);
+}
+
+html.dark :is(
+  .bg-\[\#f6f6f6\],
+  .bg-\[\#f5f5f7\],
+  .bg-\[\#f4f4f6\],
+  .bg-\[\#f4f4f4\],
+  .bg-\[\#f3f3f5\],
+  .bg-\[\#f3f3f3\],
+  .bg-\[\#efefef\]
+) {
+  background-color: #1a1a1a;
+}
+
+html.dark .bg-\[\#f2f2f4\] {
+  background-color: #222222;
+}
+
+html.dark .bg-\[\#fff8f5\] {
+  background-color: rgba(253, 78, 0, 0.1);
+}
+
+html.dark .bg-\[\#fff6f5\] {
+  background-color: rgba(251, 113, 133, 0.12);
+}
+
+html.dark :is(
+  .hover\:bg-\[\#f6f6f6\]:hover,
+  .hover\:bg-\[\#f4f4f4\]:hover,
+  .hover\:bg-\[\#f7f7f8\]:hover
+) {
+  background-color: rgba(255, 255, 255, 0.06);
+}
+
+html.dark .bg-black\/\[0\.03\] {
+  background-color: rgba(255, 255, 255, 0.03);
+}
+
+html.dark .bg-black\/\[0\.04\],
+html.dark .hover\:bg-black\/\[0\.04\]:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+html.dark .bg-black\/\[0\.05\] {
+  background-color: rgba(255, 255, 255, 0.07);
+}
+
+html.dark .bg-black\/15 {
+  background-color: rgba(255, 255, 255, 0.14);
+}
+
+html.dark .bg-\[\#1c1c1c\]\/25 {
+  background-color: rgba(0, 0, 0, 0.62);
+}
+
+/* Solid controls invert to a light matte button. Text stays readable. */
+html.dark :is(.bg-\[\#1d1d1f\], .bg-\[\#161616\], .bg-\[\#1c1c1c\]) {
+  background-color: #f2f2f2;
+  color: #141414;
+}
+
+html.dark .hover\:bg-black:hover {
+  background-color: #e6e6e6;
+  color: #141414;
+}
+
+html.dark :is(
+  .checked\:bg-\[\#161616\]:checked,
+  .indeterminate\:bg-\[\#161616\]:indeterminate
+) {
+  background-color: #f2f2f2;
+}
+
+html.dark .peer:checked ~ .text-white {
+  color: #141414;
+}
+
+html.dark .peer:indeterminate ~ .bg-white {
+  background-color: #141414;
+}
+
+html.dark :is(
+  .text-\[\#1c1c1c\],
+  .text-\[\#1d1d1f\],
+  .text-\[\#1a1a1a\],
+  .hover\:text-\[\#1a1a1a\]:hover,
+  .hover\:text-\[\#1d1d1f\]:hover
+) {
+  color: #f3f3f3;
+}
+
+html.dark .text-\[\#1d1d1f\]\/75 {
+  color: rgba(243, 243, 243, 0.75);
+}
+
+html.dark :is(
+  .text-\[\#2a2a2a\],
+  .text-\[\#3a3a3a\],
+  .text-\[\#3a3a3c\],
+  .hover\:text-\[\#3a3a3a\]:hover,
+  .hover\:text-\[\#3a3a3c\]:hover
+) {
+  color: #e4e4e4;
+}
+
+html.dark :is(
+  .text-\[\#5c5c5c\],
+  .text-\[\#6a6a6a\],
+  .text-\[\#6e6e73\],
+  .text-\[\#6f6f6f\],
+  .text-\[\#86868b\],
+  .text-\[\#8a8a8a\],
+  .text-\[\#8d8d8d\],
+  .text-\[\#8e8e8e\],
+  .text-\[\#8e8e93\],
+  .text-\[\#9a9a9a\]
+) {
+  color: #a1a1a6;
+}
+
+html.dark :is(.text-\[\#aeaeb2\], .text-\[\#b0b0b0\], .text-\[\#c8c8c8\], .placeholder\:text-\[\#b0b0b0\]::placeholder) {
+  color: #6e6e73;
+}
+
+html.dark .text-\[\#1d4ed8\],
+html.dark .hover\:text-\[\#1e3a8a\]:hover {
+  color: #9cb8ff;
+}
+
+html.dark .hover\:text-\[\#1e3a8a\]:hover {
+  color: #d5e2ff;
+}
+
+html.dark :is(.text-\[\#B45309\], .text-\[\#9A6700\]) {
+  color: #f5c16c;
+}
+
+html.dark :is(.text-\[\#b42318\], .text-\[\#d14343\]) {
+  color: #fb8a8a;
+}
+
+html.dark .text-\[\#047857\],
+html.dark .hover\:text-\[\#065f46\]:hover {
+  color: #6ee7b7;
+}
+
+html.dark .text-\[\#F3C35A\] {
+  color: #f5c16c;
+}
+
+html.dark :is(
+  .border-\[\#ececec\],
+  .border-\[\#f2f2f2\],
+  .border-\[\#eeeeee\],
+  .border-\[\#e6e6e6\],
+  .border-\[\#d5d5d5\],
+  .border-\[\#d8d8dc\],
+  .hover\:border-\[\#d8d8dc\]:hover,
+  .border-black\/\[0\.06\],
+  .border-black\/\[0\.08\]
+) {
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+html.dark :is(
+  .border-\[\#161616\],
+  .border-\[\#1d1d1f\],
+  .border-\[\#1d1d1f\]\/50,
+  .checked\:border-\[\#161616\]:checked,
+  .indeterminate\:border-\[\#161616\]:indeterminate,
+  .focus\:border-\[\#161616\]:focus
+) {
+  border-color: rgba(255, 255, 255, 0.72);
+}
+
+html.dark :is(
+  .ring-black\/\[0\.06\],
+  .ring-black\/\[0\.08\],
+  .ring-\[\#f3f3f5\]
+) {
+  --tw-ring-color: rgba(255, 255, 255, 0.08);
+}
+
+html.dark .ring-black\/\[0\.12\],
+html.dark .hover\:ring-black\/\[0\.12\]:hover,
+html.dark .ring-black\/20 {
+  --tw-ring-color: rgba(255, 255, 255, 0.18);
+}
+
+html.dark .ring-\[\#1d1d1f\],
+html.dark .hover\:ring-\[\#1d1d1f\]:hover {
+  --tw-ring-color: rgba(255, 255, 255, 0.82);
+}
+
+html.dark .ring-white {
+  --tw-ring-color: var(--background);
+}
+
+.runex-switch {
+  position: relative;
+  display: inline-flex;
+  width: 36px;
+  height: 22px;
+  flex: none;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.14);
+  transition: background-color 180ms ease;
+}
+
+.runex-switch > span {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  transition: transform 180ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.runex-switch.is-on {
+  background: #1d1d1f;
+}
+
+.runex-switch.is-on > span {
+  transform: translateX(14px);
+}
+
+html.dark .runex-switch {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+html.dark .runex-switch.is-on {
+  background: #f2f2f2;
+}
+
+html.dark .runex-switch.is-on > span {
+  background: #141414;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
