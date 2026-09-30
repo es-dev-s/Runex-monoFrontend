@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
-import { Check, Copy, ExternalLink, Globe, Loader2, RefreshCw, Trash2, X } from "lucide-react";
+import { Check, Copy, ExternalLink, Loader2, Plus, RefreshCw, Trash2, X } from "lucide-react";
 import { AnimatePresence } from "motion/react";
 import * as m from "motion/react-m";
 import { ApiError, domains as domainsApi, type CustomDomain, type CustomDomainList, type CustomDomainRecord } from "@/lib/api";
@@ -10,8 +10,6 @@ import { ConnectionField, copyText } from "@/components/projects/connection-urls
 import { useConfirm } from "@/hooks/use-confirm";
 import { cn } from "@/lib/cn";
 import { servicePublicUrl } from "@/lib/projects";
-
-const DEFAULT_CNAME_TARGET = "cname.runex.cloud";
 
 export function CustomDomains({
   projectId,
@@ -29,8 +27,8 @@ export function CustomDomains({
   const [platformEnabled, setPlatformEnabled] = useState(true);
   const [primaryUrl, setPrimaryUrl] = useState("");
   const [primaryKind, setPrimaryKind] = useState("");
-  const [cnameTarget, setCnameTarget] = useState(DEFAULT_CNAME_TARGET);
   const [hostname, setHostname] = useState("");
+  const [addOpen, setAddOpen] = useState(false);
   const [setupId, setSetupId] = useState<string | null>(null);
   const [inflight, setInflight] = useState<Record<string, boolean>>({});
   const [error, setError] = useState<string | null>(null);
@@ -38,6 +36,7 @@ export function CustomDomains({
   const inflightRef = useRef<Set<string>>(new Set());
   const loadGen = useRef(0);
   const visitKey = useRef("");
+  const followGen = useRef<Record<string, number>>({});
 
   const busy = useCallback((key: string) => Boolean(inflight[key]), [inflight]);
 
@@ -78,7 +77,6 @@ export function CustomDomains({
       }
       if (fullList || next.primaryUrl !== undefined) setPrimaryUrl(next.primaryUrl ?? "");
       if (fullList || next.primaryKind !== undefined) setPrimaryKind(next.primaryKind ?? "");
-      if (fullList || next.cnameTarget || next.domain?.cnameTarget) setCnameTarget(resolveCnameTarget(next));
       if (fullList || next.primaryUrl !== undefined || next.primaryKind !== undefined || next.platformUrlEnabled !== undefined) {
         const key = `${next.primaryUrl ?? ""}|${next.primaryKind ?? ""}|${next.platformUrlEnabled !== false}`;
         if (visitKey.current && visitKey.current !== key) onVisitChange?.();
@@ -113,12 +111,12 @@ export function CustomDomains({
 
   useEffect(() => {
     const pending = items.some((item) => item.status === "pending" || item.status === "verifying" || item.status === "error");
-    if (!pending) return;
+    if (!pending && !setupId) return;
     const timer = window.setInterval(() => {
       void load().catch(() => undefined);
-    }, 20_000);
+    }, setupId ? 8_000 : 20_000);
     return () => window.clearInterval(timer);
-  }, [items, load]);
+  }, [items, load, setupId]);
 
   async function add() {
     const value = hostname.trim();
@@ -129,8 +127,9 @@ export function CustomDomains({
     try {
       const next = await domainsApi.add(projectId, nodeId, value);
       applyState(next);
-      setHostname("");
       const added = next.domain ?? (next.domains ?? []).find((item) => !known.has(item.id));
+      setHostname("");
+      setAddOpen(false);
       if (added) setSetupId(added.id);
     } catch (cause) {
       setError(cause instanceof ApiError ? cause.message : "Could not add that domain.");
@@ -139,7 +138,7 @@ export function CustomDomains({
     }
   }
 
-  async function verify(id: string) {
+  async function verify(id: string, automatic = false) {
     const key = `verify:${id}`;
     if (inflightRef.current.has(key) || inflightRef.current.has(`remove:${id}`)) return;
     begin(key);
@@ -147,8 +146,17 @@ export function CustomDomains({
     try {
       const next = await domainsApi.verify(projectId, nodeId, id);
       applyState(next);
+      const status = next.domain?.status;
+      if (!automatic && status && status !== "active") {
+        const gen = (followGen.current[id] ?? 0) + 1;
+        followGen.current[id] = gen;
+        window.setTimeout(() => {
+          if (followGen.current[id] === gen) void verify(id, true);
+        }, 12_000);
+      }
     } catch (cause) {
-      setError(cause instanceof ApiError ? cause.message : "Could not check DNS yet.");
+      setError(cause instanceof ApiError ? cause.message : "Could not check DNS yet. The records stay saved, so you can verify again.");
+      void load().catch(() => undefined);
     } finally {
       end(key);
     }
@@ -177,11 +185,22 @@ export function CustomDomains({
   return (
     <section className="mt-6">
       {dialog}
-      <p className="text-[11px] font-medium tracking-tight text-fg/35 uppercase">Domains</p>
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-[11px] font-medium tracking-tight text-fg/35 uppercase">Domains</p>
+        <button
+          type="button"
+          aria-label="Add domain"
+          onClick={() => {
+            setError(null);
+            setAddOpen(true);
+          }}
+          className="grid size-8 cursor-pointer place-items-center rounded-lg bg-fg/[0.05] text-fg/70 ring-1 ring-fg/[0.08] transition-colors hover:bg-fg/[0.1] hover:text-fg"
+        >
+          <Plus size={15} strokeWidth={1.9} />
+        </button>
+      </div>
       <p className="mt-1.5 text-[12px] leading-relaxed tracking-tight text-fg/42">
-        Add your domain, then create the TXT and a Cloudflare Proxied CNAME to
-        <span className="text-fg/70"> {cnameTarget}</span>. When it connects, it becomes the
-        primary URL and the Runex URL is revoked. You can generate the Runex URL again anytime.
+        Use the Runex address, or connect a domain you own. A subdomain needs a CNAME. A root domain uses a CNAME when your DNS allows it, or A and AAAA records when it does not.
       </p>
 
       {visit && customPrimary ? (
@@ -268,35 +287,6 @@ export function CustomDomains({
         </div>
       ) : null}
 
-      <form
-        className="mt-3 flex flex-col gap-2"
-        onSubmit={(event) => {
-          event.preventDefault();
-          void add();
-        }}
-      >
-        <input
-          value={hostname}
-          onChange={(event) => setHostname(event.target.value)}
-          placeholder="app.example.com"
-          autoCapitalize="none"
-          autoCorrect="off"
-          spellCheck={false}
-          className="h-11 w-full rounded-lg bg-fg/[0.04] px-3 text-base tracking-tight text-fg outline-none ring-1 ring-fg/[0.08] placeholder:text-fg/28 focus:ring-fg/20"
-        />
-        <button
-          type="submit"
-          disabled={busy("add") || !hostname.trim()}
-          className={cn(
-            "inline-flex h-11 w-full items-center justify-center gap-1.5 rounded-lg bg-btn px-3 text-[14px] font-medium tracking-tight text-btn-fg",
-            busy("add") || !hostname.trim() ? "cursor-progress opacity-60" : "cursor-pointer hover:bg-brand-hover",
-          )}
-        >
-          {busy("add") ? <Loader2 size={12} strokeWidth={2} className="animate-spin" /> : <Globe size={12} strokeWidth={1.9} />}
-          Add domain
-        </button>
-      </form>
-
       {items.length > 0 ? (
         <ul className="mt-3 flex flex-col gap-3">
           {items.map((item) => (
@@ -340,6 +330,7 @@ export function CustomDomains({
                           setError(null);
                           try {
                             await domainsApi.remove(projectId, nodeId, item.id);
+                            followGen.current[item.id] = (followGen.current[item.id] ?? 0) + 1;
                             setItems((current) => current.filter((domain) => domain.id !== item.id));
                             setSetupId((current) => (current === item.id ? null : current));
                           } catch (cause) {
@@ -386,10 +377,33 @@ export function CustomDomains({
       ) : null}
 
       <AnimatePresence>
-        {setup ? <DnsDialog key={setup.id} item={setup} onClose={() => setSetupId(null)} /> : null}
+        {addOpen ? (
+          <AddDomainDialog
+            key="add-domain"
+            hostname={hostname}
+            busy={busy("add")}
+            error={error}
+            onHostname={setHostname}
+            onClose={() => setAddOpen(false)}
+            onSubmit={() => void add()}
+          />
+        ) : null}
+        {setup ? (
+          <DnsDialog
+            key={setup.id}
+            item={setup}
+            busy={busy(`verify:${setup.id}`)}
+            onVerify={() => void verify(setup.id)}
+            onClose={() => setSetupId(null)}
+          />
+        ) : null}
       </AnimatePresence>
 
-      {error ? (
+      {items.length === 0 ? (
+        <p className="mt-3 text-[12px] tracking-tight text-fg/40">No custom domain yet.</p>
+      ) : null}
+
+      {error && !addOpen ? (
         <p role="alert" className="mt-3 text-[11px] tracking-tight text-rose-700">
           {error}
         </p>
@@ -398,20 +412,6 @@ export function CustomDomains({
   );
 }
 
-
-function resolveCnameTarget(next: CustomDomainList): string {
-  const fromList = (next.cnameTarget ?? next.domain?.cnameTarget ?? "").trim();
-  if (fromList) return fromList;
-  for (const domain of next.domains ?? []) {
-    const fromDomain = (domain.cnameTarget ?? "").trim();
-    if (fromDomain) return fromDomain;
-  }
-  for (const domain of next.domains ?? []) {
-    const record = (domain.records ?? []).find((entry) => entry.type === "CNAME" && entry.value?.trim());
-    if (record?.value?.trim()) return record.value.trim();
-  }
-  return DEFAULT_CNAME_TARGET;
-}
 
 function mergeDomains(current: CustomDomain[], incoming: CustomDomain[], inflight: Set<string>) {
   const local = new Map(current.map((item) => [item.id, item]));
@@ -425,7 +425,21 @@ function mergeDomains(current: CustomDomain[], incoming: CustomDomain[], infligh
     });
 }
 
-function DnsDialog({ item, onClose }: { item: CustomDomain; onClose: () => void }) {
+function AddDomainDialog({
+  hostname,
+  busy,
+  error,
+  onHostname,
+  onClose,
+  onSubmit,
+}: {
+  hostname: string;
+  busy: boolean;
+  error: string | null;
+  onHostname: (value: string) => void;
+  onClose: () => void;
+  onSubmit: () => void;
+}) {
   useEffect(() => {
     function onKey(event: KeyboardEvent) {
       if (event.key === "Escape") onClose();
@@ -435,6 +449,114 @@ function DnsDialog({ item, onClose }: { item: CustomDomain; onClose: () => void 
   }, [onClose]);
 
   if (typeof document === "undefined") return null;
+
+  return createPortal(
+    <div className="fixed inset-0 z-[80] flex items-end justify-center md:items-center md:p-6">
+      <m.button
+        type="button"
+        aria-label="Close add domain"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.2 }}
+        onClick={onClose}
+        className="absolute inset-0 cursor-default bg-black/30"
+      />
+      <m.div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="add-domain-title"
+        initial={{ y: "42%", opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        exit={{ y: "28%", opacity: 0 }}
+        transition={{ duration: 0.34, ease: [0.22, 1, 0.36, 1] }}
+        className="relative w-full rounded-t-2xl bg-card pb-[env(safe-area-inset-bottom)] shadow-[0_-18px_40px_rgba(0,0,0,0.16)] md:max-w-[28rem] md:rounded-2xl md:pb-0"
+      >
+        <div className="flex justify-center pt-2.5 md:hidden" aria-hidden>
+          <span className="h-1 w-10 rounded-full bg-fg/20" />
+        </div>
+        <form
+          className="px-4 pt-3 pb-4 md:px-5 md:pt-5 md:pb-5"
+          onSubmit={(event) => {
+            event.preventDefault();
+            onSubmit();
+          }}
+        >
+          <div className="flex items-start gap-3">
+            <div className="min-w-0 flex-1">
+              <h2 id="add-domain-title" className="text-[15px] font-medium tracking-tight text-fg">
+                Add domain
+              </h2>
+              <p className="mt-1 text-[12px] leading-relaxed tracking-tight text-fg/45">
+                A root domain such as example.com, or a subdomain such as www.example.com.
+              </p>
+            </div>
+            <button
+              type="button"
+              aria-label="Close"
+              onClick={onClose}
+              className="grid size-8 shrink-0 cursor-pointer place-items-center rounded-lg text-fg/45 transition-colors hover:bg-fg/[0.06] hover:text-fg"
+            >
+              <X size={15} strokeWidth={1.75} />
+            </button>
+          </div>
+          <input
+            value={hostname}
+            onChange={(event) => onHostname(event.target.value)}
+            placeholder="example.com"
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
+            autoFocus
+            className="mt-4 h-11 w-full rounded-lg bg-fg/[0.04] px-3 text-base tracking-tight text-fg outline-none ring-1 ring-fg/[0.08] placeholder:text-fg/28 focus:ring-fg/20"
+          />
+          {error ? (
+            <p role="alert" className="mt-2 text-[12px] leading-relaxed tracking-tight text-rose-700">
+              {error}
+            </p>
+          ) : null}
+          <button
+            type="submit"
+            disabled={busy || !hostname.trim()}
+            className={cn(
+              "mt-3 inline-flex h-11 w-full items-center justify-center rounded-lg bg-btn px-3 text-[14px] font-medium tracking-tight text-btn-fg",
+              busy || !hostname.trim() ? "cursor-progress opacity-60" : "cursor-pointer hover:bg-brand-hover",
+            )}
+          >
+            {busy ? <Loader2 size={14} strokeWidth={2} className="animate-spin" /> : "Add domain"}
+          </button>
+        </form>
+      </m.div>
+    </div>,
+    document.body,
+  );
+}
+
+function DnsDialog({
+  item,
+  busy,
+  onVerify,
+  onClose,
+}: {
+  item: CustomDomain;
+  busy: boolean;
+  onVerify: () => void;
+  onClose: () => void;
+}) {
+  useEffect(() => {
+    function onKey(event: KeyboardEvent) {
+      if (event.key === "Escape") onClose();
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  if (typeof document === "undefined") return null;
+
+  const ownership = item.records.filter((record) => record.purpose === "verify");
+  const cnames = item.records.filter((record) => record.type === "CNAME");
+  const addresses = item.records.filter((record) => record.type === "A" || record.type === "AAAA");
+  const apex = cnames.some((record) => record.host === "@");
 
   return createPortal(
     <div className="fixed inset-0 z-[80] flex items-end justify-center md:items-center md:p-6">
@@ -456,7 +578,7 @@ function DnsDialog({ item, onClose }: { item: CustomDomain; onClose: () => void 
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: "28%", opacity: 0 }}
         transition={{ duration: 0.34, ease: [0.22, 1, 0.36, 1] }}
-        className="relative flex max-h-[min(82dvh,36rem)] w-full flex-col overflow-hidden rounded-t-2xl bg-card pb-[env(safe-area-inset-bottom)] shadow-[0_-18px_40px_rgba(0,0,0,0.16)] md:max-w-[28rem] md:rounded-2xl md:pb-0"
+        className="relative flex max-h-[min(86dvh,40rem)] w-full flex-col overflow-hidden rounded-t-2xl bg-card pb-[env(safe-area-inset-bottom)] shadow-[0_-18px_40px_rgba(0,0,0,0.16)] md:max-w-[28rem] md:rounded-2xl md:pb-0"
       >
         <div className="flex shrink-0 justify-center pt-2.5 md:hidden" aria-hidden>
           <span className="h-1 w-10 rounded-full bg-fg/20" />
@@ -467,6 +589,7 @@ function DnsDialog({ item, onClose }: { item: CustomDomain; onClose: () => void 
               {item.status === "active" ? "DNS records" : "DNS setup"}
             </h2>
             <p className="mt-1 truncate text-[12px] tracking-tight text-fg/45">{item.hostname}</p>
+            <StatusLine item={item} />
           </div>
           <button
             type="button"
@@ -478,18 +601,54 @@ function DnsDialog({ item, onClose }: { item: CustomDomain; onClose: () => void 
           </button>
         </header>
         <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-4 md:px-5 md:pb-5">
-          <ol className="flex flex-col gap-2">
-            {item.records.map((record) => (
-              <RecordRow key={`${record.purpose}-${record.name}`} record={record} />
-            ))}
-          </ol>
+          <RecordGroup title="1. Prove you own it" records={ownership} />
+          <RecordGroup title={apex ? "2. Point the root here" : "2. Point the name here"} records={cnames} />
+          {apex && addresses.length > 0 ? (
+            <div className="mt-4">
+              <p className="text-[12px] leading-relaxed tracking-tight text-fg/50">
+                If your DNS provider will not save a CNAME on @, add these A and AAAA records instead of the CNAME.
+              </p>
+              <RecordGroup title="A and AAAA" records={addresses} />
+            </div>
+          ) : null}
+          {item.error && item.status !== "active" ? (
+            <p className="mt-3 text-[12px] leading-relaxed tracking-tight text-amber-800">{item.error}</p>
+          ) : null}
           <p className="mt-3 text-[12px] leading-relaxed tracking-tight text-fg/45">
-            On Cloudflare, leave the CNAME proxied (orange cloud). Runex authorizes that target so Error 1014 does not appear.
+            On Cloudflare, leave the CNAME proxied. Runex authorizes that name so Error 1014 does not stay.
           </p>
+          {item.status !== "active" ? (
+            <button
+              type="button"
+              disabled={busy}
+              onClick={onVerify}
+              className={cn(
+                "mt-4 inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-btn text-[14px] font-medium tracking-tight text-btn-fg",
+                busy ? "cursor-progress opacity-60" : "cursor-pointer hover:bg-brand-hover",
+              )}
+            >
+              {busy ? <Loader2 size={14} strokeWidth={2} className="animate-spin" /> : <RefreshCw size={14} strokeWidth={1.9} />}
+              Verify DNS
+            </button>
+          ) : null}
         </div>
       </m.div>
     </div>,
     document.body,
+  );
+}
+
+function RecordGroup({ title, records }: { title: string; records: CustomDomainRecord[] }) {
+  if (records.length === 0) return null;
+  return (
+    <div className="mt-4 first:mt-0">
+      <p className="text-[11px] font-medium tracking-tight text-fg/55">{title}</p>
+      <ul className="mt-2 flex flex-col gap-2">
+        {records.map((record) => (
+          <RecordRow key={`${record.type}-${record.host}-${record.value}`} record={record} />
+        ))}
+      </ul>
+    </div>
   );
 }
 
@@ -504,10 +663,10 @@ function StatusLine({ item }: { item: CustomDomain }) {
     item.status === "active"
       ? "Connected"
       : item.status === "verifying"
-        ? "Checking DNS"
+        ? "Connecting"
         : item.status === "error"
           ? "Needs attention"
-          : "Add the records below";
+          : "Waiting for DNS";
   return <p className={cn("mt-0.5 text-[11px] tracking-tight", tone)}>{label}</p>;
 }
 
@@ -523,9 +682,15 @@ function RecordRow({ record }: { record: CustomDomainRecord }) {
 
   return (
     <li className="rounded-xl bg-fg/[0.04] px-3 py-2.5 ring-1 ring-fg/[0.06]">
-      <span className="text-[10px] font-medium tracking-[0.12em] text-fg/40 uppercase">{record.type}</span>
-      <CopyCell label="Host" value={record.host} copied={copied === "host"} onCopy={() => void copy("host", record.host)} />
-      <CopyCell label="Value" value={record.value} copied={copied === "value"} onCopy={() => void copy("value", record.value)} mono />
+      <span className="text-[10px] font-medium tracking-[0.12em] text-fg/40 uppercase">Type {record.type}</span>
+      <CopyCell label="Name" value={record.host} copied={copied === "host"} onCopy={() => void copy("host", record.host)} />
+      <CopyCell
+        label={record.type === "CNAME" ? "Target" : "Value"}
+        value={record.value}
+        copied={copied === "value"}
+        onCopy={() => void copy("value", record.value)}
+        mono
+      />
       {record.hint ? <p className="mt-1.5 text-[11px] leading-relaxed tracking-tight text-fg/40">{record.hint}</p> : null}
     </li>
   );
@@ -550,7 +715,7 @@ function CopyCell({
       onClick={onCopy}
       className="mt-1.5 flex w-full min-w-0 cursor-pointer items-center gap-2 rounded-lg bg-card px-2.5 py-2 text-left ring-1 ring-fg/[0.06] transition-colors hover:bg-fg/[0.03]"
     >
-      <span className="w-10 shrink-0 text-[10px] font-medium tracking-tight text-fg/35 uppercase">{label}</span>
+      <span className="w-12 shrink-0 text-[10px] font-medium tracking-tight text-fg/35 uppercase">{label}</span>
       <span className={cn("min-w-0 flex-1 truncate text-[12px] text-fg/80", mono && "font-mono")}>{value}</span>
       {copied ? (
         <Check size={13} strokeWidth={2} className="shrink-0 text-emerald-800" />

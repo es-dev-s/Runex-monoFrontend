@@ -370,7 +370,7 @@ export type SecretsBundle = {
 export type CustomDomainStatus = "pending" | "verifying" | "active" | "error";
 
 export type CustomDomainRecord = {
-  type: "TXT" | "CNAME" | "ALIAS" | string;
+  type: "TXT" | "CNAME" | "A" | "AAAA" | string;
   host: string;
   name: string;
   value: string;
