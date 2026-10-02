@@ -245,7 +245,7 @@ function reducer(state: State, action: Action): State {
       return {
         ...INITIAL,
         project: action.project,
-        nodes: action.nodes,
+        nodes: action.nodes.filter((node) => !isDraftId(node.id)),
         logs: (action.logs ?? []).map((line) => ({
           key: line.key || `c${line.ts}-${line.text}`,
           ts: line.ts,

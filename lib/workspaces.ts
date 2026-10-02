@@ -1,8 +1,10 @@
 "use client";
 
-import { useMemo, useSyncExternalStore } from "react";
+import { createContext, createElement, useContext, useEffect, useMemo, useSyncExternalStore, type ReactNode } from "react";
+import { WORKSPACE_COOKIE } from "@/lib/workspace-cookie";
 
 export const HOME_WORKSPACE = "home";
+export { WORKSPACE_COOKIE };
 
 export type Workspace = {
   id: string;
@@ -31,13 +33,22 @@ function readRaw(userId: string) {
   }
 }
 
+function writeWorkspaceCookie(raw: string) {
+  if (typeof document === "undefined") return;
+  const encoded = encodeURIComponent(raw);
+  if (encoded.length > 3800) return;
+  document.cookie = `${WORKSPACE_COOKIE}=${encoded}; Path=/; Max-Age=2592000; SameSite=Lax`;
+}
+
 function writeRaw(userId: string, saved: Saved) {
   if (!userId) return;
+  const raw = JSON.stringify(saved);
   try {
-    localStorage.setItem(storageKey(userId), JSON.stringify(saved));
+    localStorage.setItem(storageKey(userId), raw);
   } catch {
     /* private mode */
   }
+  writeWorkspaceCookie(raw);
   listeners.forEach((listener) => listener());
 }
 
@@ -76,15 +87,40 @@ function subscribe(listener: () => void) {
   return () => listeners.delete(listener);
 }
 
+const WorkspaceBootContext = createContext<string | null>(null);
+
+/** The workspace cookie from the server, so the first paint matches the saved choice. */
+export function WorkspaceBootProvider({
+  raw,
+  children,
+}: {
+  raw: string | null;
+  children: ReactNode;
+}) {
+  return createElement(WorkspaceBootContext.Provider, { value: raw }, children);
+}
+
 export function useWorkspaces(userId: string, displayName: string) {
-  const raw = useSyncExternalStore(subscribe, () => readRaw(userId), () => EMPTY);
+  const cookieRaw = useContext(WorkspaceBootContext);
+  const raw = useSyncExternalStore(
+    subscribe,
+    () => (userId ? readRaw(userId) : cookieRaw && cookieRaw.startsWith("{") ? cookieRaw : EMPTY),
+    () => (cookieRaw && cookieRaw.startsWith("{") ? cookieRaw : EMPTY),
+  );
+  useEffect(() => {
+    if (!userId) return;
+    const stored = readRaw(userId);
+    if (stored === EMPTY || stored === cookieRaw) return;
+    writeWorkspaceCookie(stored);
+  }, [cookieRaw, userId]);
   return useMemo(() => {
     const saved = parse(raw);
     const home: Workspace = { id: HOME_WORKSPACE, name: workspaceLabel(displayName) };
     const items = [home, ...saved.created];
     const active = items.find((item) => item.id === saved.activeId) ?? home;
-    return { active, items };
-  }, [displayName, raw]);
+    const ready = Boolean(userId) || Boolean(cookieRaw && cookieRaw.startsWith("{"));
+    return { active, items, saved, ready };
+  }, [cookieRaw, displayName, raw, userId]);
 }
 
 export function projectWorkspace(userId: string, projectId: string) {

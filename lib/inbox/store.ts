@@ -17,7 +17,7 @@ import { signInSchema, signUpSchema } from "@/lib/auth-schema";
 import { readUsageSnapshot } from "@/lib/panel-cache";
 import { isDraftId } from "@/lib/projects";
 import { relativeTime } from "@/lib/relative-time";
-import { placeProject } from "@/lib/workspaces";
+import { placeProject, projectWorkspace } from "@/lib/workspaces";
 import {
   clearBoot,
   readBoard,
@@ -143,6 +143,7 @@ type PlatformState = {
 
 let sessionGen = 0;
 let reloadGen = 0;
+let bootUserId = "";
 
 function paint(projects: ProjectWithNodes[], events: Deployment[], seen: Set<string>) {
   return {
@@ -153,7 +154,7 @@ function paint(projects: ProjectWithNodes[], events: Deployment[], seen: Set<str
   };
 }
 
-function bootRows(projects: ProjectWithNodes[]) {
+function bootRows(projects: ProjectWithNodes[], userId?: string) {
   const ordered = projects.slice().sort((a, b) => (Date.parse(b.updatedAt) || 0) - (Date.parse(a.updatedAt) || 0));
   return ordered.slice(0, 8).map((project) => {
     const service = projectToService(project);
@@ -174,6 +175,7 @@ function bootRows(projects: ProjectWithNodes[]) {
       status: service.status,
       time: service.time,
       detail: service.detail.slice(0, 80),
+      workspaceId: userId ? projectWorkspace(userId, project.id) : undefined,
       nodes,
     };
   });
@@ -181,7 +183,7 @@ function bootRows(projects: ProjectWithNodes[]) {
 
 function publishProjects(projects: ProjectWithNodes[]) {
   rememberBoard(projects);
-  rememberBootList(bootRows(projects));
+  rememberBootList(bootRows(projects, bootUserId || undefined));
 }
 
 /** Removed locally while Docker is still tearing the container down. */
@@ -361,6 +363,7 @@ function commitList(set: StoreSet, get: () => PlatformState, listed: ProjectWith
   const nextOpen = openId && merged.some((project) => project.id === openId) ? openId : null;
   if (openId !== nextOpen) rememberShell({ openId: nextOpen, openName: "" });
   const user = get().user;
+  if (user?.id) bootUserId = user.id;
   if (user) rememberAccount(user);
   publishProjects(merged);
   set({
@@ -441,6 +444,7 @@ export const usePlatformStore = create<PlatformState>((set, get) => ({
     try {
       const user = await auth.me();
       if (gen !== sessionGen) return;
+      bootUserId = user.id;
       rememberAccount(user);
       set({ session: "in", signedIn: true, user, authOpen: false, error: null });
       const listed = await listedP;
@@ -507,6 +511,7 @@ export const usePlatformStore = create<PlatformState>((set, get) => ({
     set({ busy: true, error: null });
     try {
       const user = await auth.login(parsed.data);
+      bootUserId = user.id;
       rememberAccount(user);
       set({ session: "in", signedIn: true, user, authOpen: false, busy: false });
       await get().reload();
@@ -527,6 +532,7 @@ export const usePlatformStore = create<PlatformState>((set, get) => ({
     set({ busy: true, error: null });
     try {
       const user = await auth.register(parsed.data);
+      bootUserId = user.id;
       rememberAccount(user);
       set({ session: "in", signedIn: true, user, authOpen: false, busy: false });
       await get().reload();
@@ -545,6 +551,7 @@ export const usePlatformStore = create<PlatformState>((set, get) => ({
     }
     sessionGen += 1;
     reloadGen += 1;
+    bootUserId = "";
     clearBoot();
     set({
       session: "out",

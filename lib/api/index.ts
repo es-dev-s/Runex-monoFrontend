@@ -28,6 +28,7 @@ import type {
   SecretGroupRecord,
   SecretItemRecord,
   CustomDomainList,
+  AdminAccount,
 } from "./types";
 
 export * from "./types";
@@ -64,6 +65,21 @@ export const auth = {
     request<{ user: User }>("/v1/auth/login", { method: "POST", body: input }).then((r) => r.user),
 
   logout: () => request<void>("/v1/auth/logout", { method: "POST" }),
+};
+
+export const admin = {
+  users: (signal?: AbortSignal) =>
+    request<{ users: AdminAccount[] }>("/v1/admin/users", { signal }).then((r) => r.users ?? []),
+
+  revoke: (id: string) =>
+    request<{ user: AdminAccount }>(`/v1/admin/users/${encodeURIComponent(id)}/revoke`, {
+      method: "POST",
+    }).then((r) => r.user),
+
+  restore: (id: string) =>
+    request<{ user: AdminAccount }>(`/v1/admin/users/${encodeURIComponent(id)}/restore`, {
+      method: "POST",
+    }).then((r) => r.user),
 };
 
 export const projects = {

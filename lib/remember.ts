@@ -29,13 +29,14 @@ const ACCOUNT = "runex.account";
 const LIST = "runex.bootList";
 const EVENTS = "runex.events";
 
-type Account = { name: string; username: string };
+type Account = { id?: string; name: string; username: string };
 type BootRow = {
   id: string;
   name: string;
   status: string;
   time: string;
   detail: string;
+  workspaceId?: string;
   nodes?: { id: string; kind: string; title: string; status: string; placed: boolean }[];
 };
 
@@ -178,7 +179,7 @@ function syncBootCookie() {
   });
 }
 
-export function rememberAccount(user: { name?: string; username?: string } | null) {
+export function rememberAccount(user: { id?: string; name?: string; username?: string } | null) {
   if (!user) {
     try {
       localStorage.removeItem(ACCOUNT);
@@ -186,7 +187,12 @@ export function rememberAccount(user: { name?: string; username?: string } | nul
       /* private mode */
     }
   } else {
-    writeJSON(ACCOUNT, { name: user.name ?? "", username: user.username ?? "" });
+    const current = readJSON<Account>(ACCOUNT);
+    writeJSON(ACCOUNT, {
+      id: user.id || current?.id || "",
+      name: user.name ?? "",
+      username: user.username ?? "",
+    });
   }
   syncBootCookie();
 }

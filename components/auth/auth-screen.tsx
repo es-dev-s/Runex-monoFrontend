@@ -5,10 +5,17 @@ import { signInSchema, signUpSchema } from "@/lib/auth-schema";
 import { usePlatformStore } from "@/lib/inbox/store";
 import { safeInternalPath } from "@/lib/session";
 import { Eye, EyeOff } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useId, useRef, useState, type FocusEvent, type FormEvent } from "react";
+
+function afterAuthPath() {
+  const requested = safeInternalPath(new URLSearchParams(window.location.search).get("next"), "");
+  const admin = usePlatformStore.getState().user?.role === "admin";
+  if (requested === "/admin") return admin ? "/admin" : "/app";
+  if (requested && requested !== "/app") return requested;
+  return admin ? "/admin" : "/app";
+}
 
 export function AuthScreen({ mode }: { mode: "sign-in" | "sign-up" }) {
   const router = useRouter();
@@ -64,8 +71,7 @@ export function AuthScreen({ mode }: { mode: "sign-in" | "sign-up" }) {
 
   useEffect(() => {
     if (session !== "in") return;
-    const next = safeInternalPath(new URLSearchParams(window.location.search).get("next"), "/app");
-    router.replace(next || "/app");
+    router.replace(afterAuthPath());
   }, [router, session]);
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
@@ -97,18 +103,17 @@ export function AuthScreen({ mode }: { mode: "sign-in" | "sign-up" }) {
       }
     }
 
-    const next = safeInternalPath(new URLSearchParams(window.location.search).get("next"), "/app");
-    router.replace(next || "/app");
+    router.replace(afterAuthPath());
   }
 
   return (
     <main
       ref={frameRef}
-      className="auth-light fixed inset-x-0 top-0 grid h-dvh min-h-0 bg-white text-[#1c1c1c] [color-scheme:light] lg:grid-cols-2"
+      className="auth-light fixed inset-x-0 top-0 flex h-dvh min-h-0 justify-center bg-white text-[#1c1c1c] [color-scheme:light]"
     >
       <div
         ref={scrollerRef}
-        className="flex min-h-0 flex-col overflow-y-auto overscroll-y-contain px-6 pt-[max(2rem,env(safe-area-inset-top))] pb-[max(2rem,env(safe-area-inset-bottom))] sm:px-10 lg:px-14"
+        className="flex min-h-0 w-full max-w-[440px] flex-col overflow-y-auto overscroll-y-contain px-6 pt-[max(2rem,env(safe-area-inset-top))] pb-[max(2rem,env(safe-area-inset-bottom))]"
       >
       <div className="m-auto w-full max-w-[400px] py-6">
         <div>
@@ -230,20 +235,6 @@ export function AuthScreen({ mode }: { mode: "sign-in" | "sign-up" }) {
         </p>
       </div>
       </div>
-
-      <aside className="relative hidden h-full min-h-0 lg:block">
-        <div className="absolute inset-x-5 top-5 bottom-0 overflow-hidden rounded-t-[32px]">
-          <Image
-            src="/inbox-banner.png"
-            alt=""
-            fill
-            priority
-            sizes="50vw"
-            className="object-cover object-[68%_top]"
-          />
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[46%] bg-gradient-to-b from-transparent to-white" />
-        </div>
-      </aside>
     </main>
   );
 }

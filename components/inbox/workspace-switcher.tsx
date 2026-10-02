@@ -14,7 +14,7 @@ export function WorkspaceSwitcher({ collapsed, sheet = false }: { collapsed: boo
   const setNav = usePlatformStore((state) => state.setNav);
   const { name, openId } = usePresentedChrome();
   const userId = user?.id ?? "";
-  const { active, items } = useWorkspaces(userId, name);
+  const { active, items, ready } = useWorkspaces(userId, name);
   const [open, setOpen] = useState(false);
   const [creating, setCreating] = useState(false);
   const [draft, setDraft] = useState("");
@@ -207,7 +207,8 @@ export function WorkspaceSwitcher({ collapsed, sheet = false }: { collapsed: boo
         type="button"
         aria-haspopup="dialog"
         aria-expanded={open}
-        aria-label={collapsed ? active.name : undefined}
+        aria-label={collapsed ? (ready ? active.name : "Workspace") : undefined}
+        aria-busy={!ready}
         onClick={() => setOpen((current) => !current)}
         className={`group relative flex h-8 min-w-0 items-center rounded-lg text-left text-[13px] tracking-[-0.011em] text-[#1d1d1f] transition-colors duration-150 ease-out ${
           collapsed ? "w-8" : "w-full"
@@ -219,7 +220,11 @@ export function WorkspaceSwitcher({ collapsed, sheet = false }: { collapsed: boo
           </span>
         ) : (
           <>
-            <span className="min-w-0 flex-1 truncate pl-2.5 font-medium">{active.name}</span>
+            {ready ? (
+              <span className="min-w-0 flex-1 truncate pl-2.5 font-medium">{active.name}</span>
+            ) : (
+              <span className="ml-2.5 h-3 w-28 rounded-full bg-black/[0.06]" />
+            )}
             <span className="grid size-7 shrink-0 place-items-center text-[#8e8e93]">
               <ChevronsUpDown size={14} strokeWidth={1.75} absoluteStrokeWidth aria-hidden />
             </span>
@@ -228,7 +233,7 @@ export function WorkspaceSwitcher({ collapsed, sheet = false }: { collapsed: boo
         {collapsed && !open ? (
           <span aria-hidden className="pointer-events-none absolute top-1/2 left-full z-30 -translate-y-1/2 pl-2">
             <span className="block h-6 rounded-full border border-black/[0.06] bg-white px-2 text-[12px] leading-6 font-normal tracking-[-0.006em] whitespace-nowrap text-[#3a3a3c] opacity-0 shadow-[0_4px_14px_rgba(0,0,0,0.08)] transition-opacity duration-150 group-hover:opacity-100 group-hover:delay-75 group-focus-visible:opacity-100">
-              {active.name}
+              {ready ? active.name : "Workspace"}
             </span>
           </span>
         ) : null}

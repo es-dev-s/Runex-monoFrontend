@@ -137,7 +137,38 @@ export type User = {
   username: string;
   email: string;
   name: string;
+  role?: "admin" | "user";
   createdAt: string;
+};
+
+export type AdminDomain = {
+  host: string;
+  url?: string;
+  kind: "platform" | "custom" | string;
+  status?: string;
+};
+
+export type AdminProject = {
+  id: string;
+  name: string;
+  ramUsedBytes: number;
+  cpuPercent: number;
+  domains: AdminDomain[];
+};
+
+export type AdminAccount = {
+  id: string;
+  username: string;
+  email: string;
+  name: string;
+  role: "admin" | "user";
+  createdAt: string;
+  revokedAt?: string | null;
+  signedIn: boolean;
+  days: number;
+  ramUsedBytes: number;
+  cpuPercent: number;
+  projects: AdminProject[];
 };
 
 export type GitHubInstallation = {

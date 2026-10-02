@@ -20,6 +20,7 @@ export type BootProject = {
   time: string;
   detail: string;
   nodes?: BootNode[];
+  workspaceId?: string;
 };
 
 export type Boot = {
@@ -94,6 +95,10 @@ export function parseBoot(raw: string | undefined, known: boolean): Boot {
             time: typeof item.time === "string" ? item.time.slice(0, 24) : "",
             detail: typeof item.detail === "string" ? item.detail.slice(0, 80) : "",
             nodes: Array.isArray(item.nodes) ? parseBootNodes(item.nodes) : undefined,
+            workspaceId:
+              typeof item.workspaceId === "string" && item.workspaceId
+                ? item.workspaceId.slice(0, 40)
+                : undefined,
           },
         ];
       });

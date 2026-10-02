@@ -21,7 +21,8 @@ import { ProjectWorkspace } from "@/components/projects/project-workspace";
 import { DashboardShell, useDashboardDrawer } from "./dashboard-drawer";
 import { Sidebar } from "./sidebar";
 import { UpgradeBanner } from "./upgrade-banner";
-import { belongsToWorkspace, useWorkspaces } from "@/lib/workspaces";
+import { HOME_WORKSPACE, useWorkspaces, WorkspaceBootProvider } from "@/lib/workspaces";
+import { useSessionWatch } from "@/hooks/use-session-watch";
 
 const loadMotion = () => import("motion/react").then((mod) => mod.domAnimation);
 
@@ -64,8 +65,9 @@ const sectionCopy: Record<
   },
 };
 
-export function InboxDashboard({ boot }: { boot: Boot }) {
+export function InboxDashboard({ boot, workspaceRaw }: { boot: Boot; workspaceRaw: string | null }) {
   return (
+    <WorkspaceBootProvider raw={workspaceRaw}>
     <ChromeProvider boot={boot}>
       <LazyMotion features={loadMotion} strict>
         <Suspense fallback={null}>
@@ -73,6 +75,7 @@ export function InboxDashboard({ boot }: { boot: Boot }) {
         </Suspense>
       </LazyMotion>
     </ChromeProvider>
+    </WorkspaceBootProvider>
   );
 }
 
@@ -87,9 +90,10 @@ function Shell() {
   const bootstrap = usePlatformStore((state) => state.bootstrap);
   const chrome = usePresentedChrome();
   const { showAccount, openId, activeNav, sort, session, boot, name } = chrome;
-  const { active: workspace } = useWorkspaces(user?.id ?? "", name);
+  const { active: workspace, saved, ready } = useWorkspaces(user?.id ?? "", name);
   const router = useRouter();
   const [motionOn, setMotionOn] = useState(false);
+  useSessionWatch(session === "in");
 
   useLayoutEffect(() => {
     usePlatformStore.getState().hydrateCachedBoard();
@@ -154,9 +158,15 @@ function Shell() {
       ? boot.openName || boot.projects.find((project) => project.id === openId)?.name || ""
       : boot.projects.find((project) => project.id === openId)?.name || "";
   const projectTitle = openId ? opened?.name || cachedName || "Project" : null;
-  const inWorkspace = (row: Service) =>
-    activeNav !== "projects" || belongsToWorkspace(user?.id ?? "", row.projectId, workspace.id);
-  const preview = activeNav === "projects" ? orderedBoot(bootServices(boot.projects), sort).filter(inWorkspace) : [];
+  const bootWorkspace = new Map(boot.projects.map((project) => [project.id, project.workspaceId]));
+  const inWorkspace = (row: Service) => {
+    if (activeNav !== "projects") return true;
+    if (!ready) return false;
+    const placed = (row.projectId && saved.projects[row.projectId]) || bootWorkspace.get(row.projectId ?? "") || HOME_WORKSPACE;
+    return placed === workspace.id;
+  };
+  const preview =
+    activeNav === "projects" && ready ? orderedBoot(bootServices(boot.projects), sort).filter(inWorkspace) : [];
   const visibleOrPreview = projectRows(visible.filter(inWorkspace), preview, listed, activeNav);
   const heading = headingFor(activeNav, visible.length, serverCount);
   const listLabel =

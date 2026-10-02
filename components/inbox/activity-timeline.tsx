@@ -6,7 +6,7 @@ import { RedisMark } from "@/components/icons/redis-mark";
 import { activity, type Deployment, type LogLine, type ProjectWithNodes } from "@/lib/api";
 import { usePlatformStore } from "@/lib/inbox/store";
 import { rememberSelectedNode } from "@/lib/remember";
-import { belongsToWorkspace, useWorkspaces } from "@/lib/workspaces";
+import { HOME_WORKSPACE, useWorkspaces } from "@/lib/workspaces";
 import { BottomSheet, useMaxMd } from "@/components/ui/bottom-sheet";
 import { X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -38,8 +38,6 @@ const ROW = 40;
 const MAIN_X = 20;
 const BRANCH_X = 6;
 const PANEL = 504;
-/** Sample rows for visual review. Remove when asked. */
-const PREVIEW = true;
 
 const TONE_COLOR: Record<Tone, string> = {
   deploy: "#4c8dff",
@@ -51,7 +49,7 @@ const TONE_COLOR: Record<Tone, string> = {
 export function ActivityTimeline() {
   const user = usePlatformStore((state) => state.user);
   const { name } = usePresentedChrome();
-  const { active } = useWorkspaces(user?.id ?? "", name);
+  const { active, saved, ready } = useWorkspaces(user?.id ?? "", name);
   const [events, setEvents] = useState<Deployment[] | null>(null);
   const [failed, setFailed] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -64,10 +62,10 @@ export function ActivityTimeline() {
     const ac = new AbortController();
     let live = true;
     activity
-      .hour(ac.signal)
-      .then((items) => {
+      .get(undefined, ac.signal)
+      .then((feed) => {
         if (!live) return;
-        setEvents(items);
+        setEvents((feed.events ?? []).filter(isDeploy));
       })
       .catch((cause: unknown) => {
         if (!live || isAbort(cause)) return;
@@ -81,12 +79,14 @@ export function ActivityTimeline() {
   }, []);
 
   const mine = useMemo(() => {
-    const list = [...(PREVIEW ? previewEvents() : []), ...(events ?? [])];
-    const visible = !user?.id
-      ? list
-      : list.filter((event) => belongsToWorkspace(user.id, event.projectId, active.id));
+    if (!ready || events === null) return [];
+    const visible = events.filter((event) => {
+      if (event.id.startsWith("preview-")) return false;
+      const placed = saved.projects[event.projectId] || HOME_WORKSPACE;
+      return placed === active.id;
+    });
     return markFresh(visible);
-  }, [events, user?.id, active.id]);
+  }, [active.id, events, ready, saved.projects]);
 
   const rows = useMemo(() => mine.flatMap(rowsFor), [mine]);
   const selected = rows.find((row) => row.id === selectedId) ?? null;
@@ -109,10 +109,10 @@ export function ActivityTimeline() {
       <section className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-[16px] border border-[#ececec] bg-white">
         <header className="flex items-baseline justify-between gap-3 px-5 pt-5 pb-2">
           <h2 className="text-[22px] font-semibold tracking-[-0.03em] text-[#1d1d1f]">Audit logs</h2>
-          <p className="text-[12px] tracking-[-0.006em] text-[#8e8e93]">Last hour</p>
+          <p className="text-[12px] tracking-[-0.006em] text-[#8e8e93]">Recent</p>
         </header>
 
-        {events === null && !PREVIEW ? (
+        {events === null || !ready ? (
           <div className="flex flex-col gap-2 px-5 pt-3" aria-hidden>
             {Array.from({ length: 7 }, (_, index) => (
               <div key={index} className="h-8 rounded-lg bg-[#f6f6f6]" />
@@ -122,7 +122,7 @@ export function ActivityTimeline() {
           <p className="px-5 py-10 text-[14px] text-[#8e8e93]">Audit logs could not be loaded.</p>
         ) : rows.length === 0 ? (
           <p className="px-5 py-10 text-[14px] leading-6 text-[#8e8e93]">
-            No deploys, pushes, or crashes in the last hour.
+            No deploys, pushes, or crashes yet.
           </p>
         ) : (
           <div className="min-h-0 flex-1 overflow-y-auto px-2 pb-4">
@@ -273,10 +273,6 @@ function LogPanel({ row, onClose, fill = false }: { row: ActivityRow; onClose: (
     const mine = ++ticket.current;
     setLogs(null);
     setLogError(false);
-    if (deploymentId.startsWith("preview-")) {
-      setLogs(previewLogs(row));
-      return;
-    }
     activity
       .logs(deploymentId, ac.signal)
       .then((lines) => {
@@ -629,80 +625,12 @@ function isAbort(cause: unknown) {
   return cause instanceof DOMException && cause.name === "AbortError";
 }
 
-function previewEvents(): Deployment[] {
-  const now = Date.now();
-  const at = (minutesAgo: number) => new Date(now - minutesAgo * 60_000).toISOString();
-  const samples: Array<[string, string, string, string, string, string, string, string | null, string, number]> = [
-    ["demo-runex", "prj_6b41da23c7d7347a", "svc_93d1143754006c50", "Demo", "Runex", "success", "manual", "es-dev-s/Runex", "", 2],
-    ["tests-push", "prj_e9e2072459295069", "svc_89067a900792319e", "tests", "Runex", "success", "github", "main", "", 5],
-    ["tesst-crash", "prj_8d605b85b2791e2b", "svc_532fb273715b626d", "tesst", "Runex", "failed", "github", "main", "next build failed: type error in app/page.tsx", 8],
-    ["test-runex", "prj_ba84f337da12dcc4", "svc_3928554240fda7b5", "test", "Runex", "success", "manual", "es-dev-s/Runex", "", 11],
-    ["test-pg", "prj_ba84f337da12dcc4", "nod_acd3d43dd23b7b3f", "test", "Postgresql", "success", "manual", null, "", 14],
-    ["tests-redis", "prj_e9e2072459295069", "nod_a4fe34e4c6dd71f3", "tests", "Redis", "success", "github", "main", "", 17],
-    ["tesst-redis", "prj_8d605b85b2791e2b", "nod_88da8961411bf145", "tesst", "Redis", "failed", "manual", null, "Redis exited: port 6379 already in use", 20],
-    ["loadtest", "prj_4e425464b0b57f87", "nod_5cc65eeef559ae17", "test", "Postgresql", "running", "manual", null, "", 22],
-    ["demo-release", "prj_6b41da23c7d7347a", "svc_93d1143754006c50", "Demo", "Runex", "success", "github", "release", "", 25],
-    ["test-pg-2", "prj_4e425464b0b57f87", "nod_5cc65eeef559ae17", "test", "Postgresql", "success", "manual", null, "", 28],
-    ["tests-exit", "prj_e9e2072459295069", "svc_89067a900792319e", "tests", "Runex", "failed", "manual", "es-dev-s/Runex", "Container exited with code 1", 31],
-    ["test-redis-ok", "prj_ba84f337da12dcc4", "nod_9129743490ea7143", "test", "Redis", "success", "manual", null, "", 34],
-    ["tesst-ok", "prj_8d605b85b2791e2b", "svc_532fb273715b626d", "tesst", "Runex", "success", "manual", "es-dev-s/Runex", "", 37],
-    ["testsdv", "prj_37140401086266ad", "svc_5dee4bcb685b092c", "testsdv", "Runex", "success", "github", "main", "", 40],
-    ["test-oom", "prj_ba84f337da12dcc4", "nod_9129743490ea7143", "test", "Redis", "failed", "github", "main", "OOMKilled after the memory limit", 43],
-    ["demo-again", "prj_6b41da23c7d7347a", "svc_93d1143754006c50", "Demo", "Runex", "success", "manual", "es-dev-s/Runex", "", 46],
-    ["test-cancel", "prj_4e425464b0b57f87", "svc_3dd8b67d9036cadd", "test", "test", "cancelled", "manual", null, "Deploy cancelled", 49],
-    ["tests-pg", "prj_e9e2072459295069", "nod_2a2e0bdc4e1539e9", "tests", "Postgresql", "success", "manual", null, "", 52],
-    ["tesst-push", "prj_8d605b85b2791e2b", "nod_88da8961411bf145", "tesst", "Redis", "success", "github", "main", "", 54],
-    ["test-building", "prj_ba84f337da12dcc4", "svc_3928554240fda7b5", "test", "Runex", "running", "github", "main", "", 56],
-    ["demo-health", "prj_6b41da23c7d7347a", "svc_93d1143754006c50", "Demo", "Runex", "failed", "github", "main", "Healthcheck failed on port 3000", 58],
-  ];
-  return samples.map(([id, projectId, nodeId, projectName, service, status, trigger, sourceRef, error, minutesAgo]) => ({
-    id: `preview-${id}`,
-    projectId,
-    nodeId,
-    serviceTitle: service,
-    projectName,
-    status: status as Deployment["status"],
-    phase: status === "running" ? "build" : "start",
-    trigger,
-    sourceType: trigger === "github" || service === "Runex" || service === "Test" ? "github" : "image",
-    sourceRef,
-    error: error || null,
-    createdAt: at(minutesAgo + 4),
-    finishedAt: status === "running" ? null : at(minutesAgo),
-  }));
-}
-
-function previewLogs(row: ActivityRow): LogLine[] {
-  const start = new Date(row.startedAt).getTime();
-  const end = row.finishedAt ? new Date(row.finishedAt).getTime() : start + 48_000;
-  const ref = row.how.startsWith("Push to ") ? row.how.slice("Push to ".length) : "es-dev-s/Runex";
-  const lines: Array<[LogLine["level"], string]> = [];
-  if (row.mark === "redis" || row.service === "Redis") {
-    lines.push(["info", "Deploy started — Redis"], ["cmd", "docker run redis:7"], ["info", "Ready to accept connections on 6379"]);
-  } else if (row.mark === "postgresql" || row.service === "Postgresql" || row.service === "Loadtest") {
-    lines.push(["info", `Deploy started — ${row.service}`], ["cmd", "docker run postgres:16"], ["info", "database system is ready to accept connections"]);
-  } else {
-    lines.push(
-      ["info", "Deploy started — es-dev-s/Runex"],
-      ["info", `Fetching a fresh copy from GitHub — es-dev-s/Runex @ ${ref}`],
-      ["info", "Preparing isolated workspace"],
-      ["info", "Detected nextjs · TypeScript"],
-      ["info", "Runtime image node:22-bookworm-slim"],
-      ["cmd", "docker build"],
-      ["info", "Listening on port 3000"],
-    );
-  }
-  if (row.tone === "crash") lines.push(["error", row.error || "Container exited"]);
-  else if (row.tone === "building") lines.push(["info", "Build still running"]);
-  else lines.push(["success", "Deploy finished"]);
-  const span = Math.max(end - start, 1000);
-  return lines.map(([level, text], index) => ({
-    id: index + 1,
-    projectId: row.projectId,
-    deploymentId: row.deploymentId,
-    ts: new Date(start + (span * index) / Math.max(lines.length - 1, 1)).toISOString(),
-    phase: level === "cmd" ? "containerize" : "start",
-    level,
-    text,
-  }));
+function isDeploy(event: Deployment) {
+  return (
+    event.status === "success" ||
+    event.status === "failed" ||
+    event.status === "running" ||
+    event.status === "building" ||
+    event.status === "cancelled"
+  );
 }

@@ -3,7 +3,7 @@
 import { usePlatformStore } from "@/lib/inbox/store";
 import { usePresentedChrome } from "./chrome";
 import { useTheme } from "@/components/theme-switch";
-import { LogOut, Moon, UserRound } from "lucide-react";
+import { LogOut, Moon, Shield, UserRound } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence } from "motion/react";
 import * as m from "motion/react-m";
@@ -11,6 +11,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 
 export function ProfileMenu() {
   const logout = usePlatformStore((state) => state.logout);
+  const role = usePlatformStore((state) => state.user?.role);
   const { showAccount, name, openId } = usePresentedChrome();
   const router = useRouter();
   const setNav = usePlatformStore((state) => state.setNav);
@@ -81,6 +82,16 @@ export function ProfileMenu() {
                 : "bottom-[calc(100%+6px)] left-0 w-full origin-bottom"
             }`}
           >
+            {role === "admin" ? (
+              <MenuOption
+                icon={<Shield size={15} strokeWidth={1.5} absoluteStrokeWidth />}
+                label="Admin"
+                onClick={() => {
+                  setOpen(false);
+                  router.push("/admin");
+                }}
+              />
+            ) : null}
             <MenuOption
               icon={<UserRound size={15} strokeWidth={1.5} absoluteStrokeWidth />}
               label="Account"
