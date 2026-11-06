@@ -15,6 +15,7 @@ export function AdminHome({ granted = false }: { granted?: boolean }) {
   const [error, setError] = useState("");
   const [pending, setPending] = useState<AdminAccount | null>(null);
   const [busyId, setBusyId] = useState("");
+  const [planPending, setPlanPending] = useState<PlanChange | null>(null);
   const [live, setLive] = useState(false);
   const [allowed, setAllowed] = useState(granted);
   const sourceRef = useRef<EventSource | null>(null);
@@ -74,6 +75,7 @@ export function AdminHome({ granted = false }: { granted?: boolean }) {
 
   const signedIn = accounts?.filter((row) => row.signedIn && !row.revokedAt).length ?? 0;
   const revoked = accounts?.filter((row) => row.revokedAt).length ?? 0;
+  const paid = accounts?.filter((row) => row.plan?.status === "active").length ?? 0;
 
   if (!allowed) return null;
 
@@ -86,6 +88,20 @@ export function AdminHome({ granted = false }: { granted?: boolean }) {
       setPending(null);
     } catch (cause) {
       setError(cause instanceof ApiError || cause instanceof NetworkError ? cause.message : "Could not update that account.");
+    } finally {
+      setBusyId("");
+    }
+  }
+
+  async function commitPlan(change: PlanChange) {
+    setBusyId(change.row.id);
+    setError("");
+    try {
+      const next = await admin.setPlan(change.row.id, change.plan, change.restart);
+      setAccounts((current) => current?.map((item) => (item.id === next.id ? next : item)) ?? []);
+      setPlanPending(null);
+    } catch (cause) {
+      setError(cause instanceof ApiError || cause instanceof NetworkError ? cause.message : "Could not update that plan.");
     } finally {
       setBusyId("");
     }
@@ -138,9 +154,10 @@ export function AdminHome({ granted = false }: { granted?: boolean }) {
           </label>
         </div>
 
-        <dl className="mt-6 grid grid-cols-3 gap-2 sm:gap-3">
+        <dl className="mt-6 grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
           <Stat label="Accounts" value={accounts?.length} />
           <Stat label="Signed in" value={accounts ? signedIn : undefined} />
+          <Stat label="Paid" value={accounts ? paid : undefined} />
           <Stat label="Revoked" value={accounts ? revoked : undefined} />
         </dl>
 
@@ -170,6 +187,11 @@ export function AdminHome({ granted = false }: { granted?: boolean }) {
                       <span className="text-[12px] text-fg/45">{formatDays(row.days)}</span>
                     </div>
                     <p className="mt-0.5 truncate text-[13px] text-fg/55">{row.email}</p>
+                    <PlanControl
+                      row={row}
+                      busy={busyId === row.id}
+                      onPick={(plan, restart) => setPlanPending({ row, plan, restart })}
+                    />
                     <p className="mt-1 text-[12px] tabular-nums text-fg/55">
                       RAM {formatBytes(row.ramUsedBytes)} · CPU {formatCpu(row.cpuPercent)}
                     </p>
@@ -233,7 +255,118 @@ export function AdminHome({ granted = false }: { granted?: boolean }) {
           </div>
         </div>
       ) : null}
+      {planPending ? (
+        <div className="fixed inset-0 z-20 grid place-items-end bg-black/40 p-4 sm:place-items-center" role="presentation">
+          <div role="dialog" aria-modal="true" aria-labelledby="plan-title" className="w-full max-w-md rounded-2xl bg-card p-5 shadow-2xl">
+            <h2 id="plan-title" className="text-[18px] font-semibold tracking-[-0.03em]">
+              {planTitle(planPending)}
+            </h2>
+            <p className="mt-2 text-[14px] leading-6 text-fg/65">
+              <span className="font-medium text-fg">{planPending.row.username}</span> ({planPending.row.email}){" "}
+              {planBody(planPending)}
+            </p>
+            <div className="mt-5 flex justify-end gap-2">
+              <button type="button" onClick={() => setPlanPending(null)} className="rounded-full px-3 py-1.5 text-[13px] text-fg/70 hover:bg-hover">
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={busyId === planPending.row.id}
+                onClick={() => void commitPlan(planPending)}
+                className="rounded-full bg-btn px-3 py-1.5 text-[13px] text-btn-fg disabled:opacity-50"
+              >
+                {planTitle(planPending)}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </main>
+  );
+}
+
+type PlanChange = { row: AdminAccount; plan: "paid" | "trial"; restart: boolean };
+
+function planTitle(change: PlanChange) {
+  if (change.plan === "paid") return "Mark as paid";
+  return change.restart ? "Start a new trial" : "Move to free trial";
+}
+
+function planBody(change: PlanChange) {
+  if (change.plan === "paid") {
+    return "is unlocked right away. Starting, deploying, databases and variables all work, and Plans and Billing show a paid plan.";
+  }
+  if (change.restart) {
+    return "gets a fresh 30-day free trial starting now. Anything locked is unlocked right away.";
+  }
+  const ends = change.row.plan ? Date.parse(change.row.plan.trialEndsAt) : NaN;
+  if (Number.isFinite(ends) && ends <= Date.now()) {
+    return `goes back to the free trial. It ended on ${formatJoined(change.row.plan!.trialEndsAt)}, so starting and deploying lock and running projects stop within a minute. Code and variables stay safe.`;
+  }
+  return "goes back to the free trial on its original clock. Nothing stops until that trial ends.";
+}
+
+function planText(row: AdminAccount) {
+  const plan = row.plan;
+  if (!plan) return "Plan unknown";
+  if (plan.status === "active") return "Paid";
+  if (plan.status === "expired") return "Trial ended";
+  return `Trial · ${plan.daysLeft} ${plan.daysLeft === 1 ? "day" : "days"} left`;
+}
+
+/** Current plan and a two-way Trial / Paid switch. Every change asks first. */
+function PlanControl({
+  row,
+  busy,
+  onPick,
+}: {
+  row: AdminAccount;
+  busy: boolean;
+  onPick: (plan: "paid" | "trial", restart: boolean) => void;
+}) {
+  const status = row.plan?.status;
+  const isPaid = status === "active";
+  const tone =
+    status === "active" ? "bg-emerald-700" : status === "expired" ? "bg-rose-600" : "bg-amber-600";
+  return (
+    <div className="mt-2 flex flex-wrap items-center gap-2">
+      <span className="inline-flex items-center gap-1.5 text-[12px] font-medium text-fg/75">
+        <span className={`size-1.5 rounded-full ${tone}`} aria-hidden />
+        {planText(row)}
+      </span>
+      <div role="group" aria-label={`Plan for ${row.username}`} className="inline-flex rounded-full border border-line bg-canvas p-0.5">
+        {(["trial", "paid"] as const).map((option) => {
+          const on = option === "paid" ? isPaid : !isPaid;
+          return (
+            <button
+              key={option}
+              type="button"
+              aria-pressed={on}
+              disabled={busy || on || !row.plan}
+              onClick={() => onPick(option, false)}
+              className={`rounded-full px-2.5 py-1 text-[12px] transition-colors disabled:cursor-default ${
+                on ? "bg-card font-medium text-fg shadow-sm" : "text-fg/55 hover:text-fg"
+              }`}
+            >
+              {option === "paid" ? "Paid" : "Trial"}
+            </button>
+          );
+        })}
+      </div>
+      {!isPaid && row.plan ? (
+        <button
+          type="button"
+          disabled={busy}
+          onClick={() => onPick("trial", true)}
+          className="rounded-full px-2 py-1 text-[12px] text-fg/50 underline-offset-2 transition-colors hover:text-fg hover:underline disabled:opacity-50"
+        >
+          New 30-day trial
+        </button>
+      ) : null}
+      {row.planChangedAt ? (
+        <span className="text-[12px] text-fg/40">Changed {formatJoined(row.planChangedAt)}</span>
+      ) : null}
+    </div>
   );
 }
 

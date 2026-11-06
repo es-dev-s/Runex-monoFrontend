@@ -181,6 +181,10 @@ export type AdminAccount = {
   ramUsedBytes: number;
   cpuPercent: number;
   projects: AdminProject[];
+  /** Trial clock and billing status, as the account itself sees it. */
+  plan?: AccountPlan;
+  /** When an administrator last switched this plan. */
+  planChangedAt?: string | null;
 };
 
 export type GitHubInstallation = {

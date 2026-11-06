@@ -102,6 +102,13 @@ export const admin = {
     request<{ user: AdminAccount }>(`/v1/admin/users/${encodeURIComponent(id)}/restore`, {
       method: "POST",
     }).then((r) => r.user),
+
+  /** Paid unlocks everything at once; trial keeps (or restarts) the 30-day clock. */
+  setPlan: (id: string, plan: "paid" | "trial", restartTrial = false) =>
+    request<{ user: AdminAccount }>(`/v1/admin/users/${encodeURIComponent(id)}/plan`, {
+      method: "POST",
+      body: { plan, restartTrial },
+    }).then((r) => r.user),
 };
 
 export const projects = {

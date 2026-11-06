@@ -230,7 +230,7 @@ function PlansPage() {
               </>
             ) : plan.status === "active" ? (
               <>
-                Your plan is <em>active</em>
+                You&apos;re on a <em>paid plan</em>
               </>
             ) : (
               <>
@@ -323,6 +323,7 @@ function Meter({ label, used, total }: { label: string; used: number | undefined
 
 function BillingPage() {
   const user = usePlatformStore((state) => state.user);
+  const paid = usePlanView().status === "active";
   return (
     <>
       <section className="st-hero">
@@ -333,7 +334,9 @@ function BillingPage() {
             Handled <em>personally</em>
           </h1>
           <p className="st-hero-sub">
-            Your first 30 days are free. After that, pricing is agreed with you directly, matched to what you already pay for hosting.
+            {paid
+              ? "Your plan is paid and active. Pricing was agreed with you directly, and billing questions go straight to support."
+              : "Your first 30 days are free. After that, pricing is agreed with you directly, matched to what you already pay for hosting."}
           </p>
         </div>
       </section>
@@ -346,7 +349,7 @@ function BillingPage() {
           {user?.email ? user.email : <span className="st-skeleton" aria-label="Loading" />}
         </Row>
         <Row label="Payment method">
-          <span className="st-muted">None on file</span>
+          <span className="st-muted">{paid ? "Arranged with support" : "None on file"}</span>
         </Row>
       </Card>
 

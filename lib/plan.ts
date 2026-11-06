@@ -102,9 +102,9 @@ export function derivePlan(plan: AccountPlan | undefined | null, now: number): P
       used,
       tone,
       locked: false,
-      label: "Active plan",
-      short: "Active plan",
-      summary: "Your plan is active. Support is here 24/7.",
+      label: "Paid plan",
+      short: "Paid plan",
+      summary: "You're on a paid plan. Nothing is limited, and support is here 24/7.",
     };
   }
   if (status === "expired") {
