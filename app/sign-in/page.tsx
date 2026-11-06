@@ -6,6 +6,9 @@ export const metadata: Metadata = {
   description: "Sign in to your Runex account",
 };
 
-export default function SignInPage() {
-  return <AuthScreen mode="sign-in" />;
+export default async function SignInPage({ searchParams }: PageProps<"/sign-in">) {
+  const params = await searchParams;
+  const raw = params.oauth_error;
+  const oauthError = typeof raw === "string" && /^[a-z_]{1,40}$/.test(raw) ? raw : undefined;
+  return <AuthScreen mode="sign-in" oauthError={oauthError} />;
 }

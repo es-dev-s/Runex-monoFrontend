@@ -94,7 +94,7 @@ export function ServiceList({
       selectedIds={selectedIds}
       confirmDelete={confirmDelete}
       removing={removing}
-      overlay={Boolean(banner)}
+      overlay={false}
       onToggleAll={() => toggleAll(ids)}
       onSelect={toggleSelecting}
       onView={(next) => {
@@ -110,9 +110,9 @@ export function ServiceList({
   return (
     <section className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[16px] border border-[#ececec] bg-white">
       {banner ? (
-        <div className="relative z-20 -mb-px shrink-0">
-          {banner}
-          <div className="absolute inset-x-0 top-0 z-30 flex items-start justify-end p-3">{toolbar}</div>
+        <div className="landing-banner-wrap relative z-20 flex shrink-0 items-start gap-2 pr-2.5 pt-2.5">
+          <div className="min-w-0 flex-1">{banner}</div>
+          <div className="shrink-0">{toolbar}</div>
         </div>
       ) : (
         <div className="flex h-12 shrink-0 items-center justify-between px-3.5">
@@ -122,7 +122,9 @@ export function ServiceList({
       )}
 
       {services.length === 0 ? (
-        <p className="border-t border-[#f2f2f2] px-4 py-10 text-center text-sm text-[#8e8e8e]">
+        <p
+          className={`px-4 py-10 text-center text-sm text-[#8e8e8e] ${banner ? "" : "border-t border-[#f2f2f2]"}`}
+        >
           Nothing in {label.toLowerCase()} yet.
         </p>
       ) : view === "grid" ? (

@@ -7,6 +7,8 @@
  * optional here; pointer fields without `omitempty` arrive as `null`.
  */
 
+import type { AccountPlan } from "@/lib/plan";
+
 export type ProjectStatus = "idle" | "building" | "running" | "failed" | "ready" | "stopped";
 
 /** Backend accepts these as node kinds on POST /v1/projects/{id}/nodes. */
@@ -138,7 +140,17 @@ export type User = {
   email: string;
   name: string;
   role?: "admin" | "user";
+  /** Profile photo from the sign-in provider (Google). Empty when none. */
+  avatarUrl?: string;
+  /** Saved dashboard appearance. Empty until the user picks one. */
+  theme?: "system" | "light" | "dark" | "";
+  /** False for accounts that only sign in with Google. */
+  hasPassword?: boolean;
   createdAt: string;
+  /** Trial clock and billing status. The API enforces it; the UI mirrors it. */
+  plan?: AccountPlan;
+  /** False until the user dismisses the first-run welcome. */
+  onboarded?: boolean;
 };
 
 export type AdminDomain = {

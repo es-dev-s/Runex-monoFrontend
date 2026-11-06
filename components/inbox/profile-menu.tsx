@@ -2,8 +2,11 @@
 
 import { usePlatformStore } from "@/lib/inbox/store";
 import { usePresentedChrome } from "./chrome";
-import { useTheme } from "@/components/theme-switch";
-import { LogOut, Moon, Shield, UserRound } from "lucide-react";
+import { ThemeChoice } from "@/components/theme-switch";
+import { ChevronsUpDown, LifeBuoy, LogOut, Shield, UserRound } from "lucide-react";
+import { supportHref } from "@/lib/plan";
+import { PlanLabel } from "./plan-label";
+import { UserAvatar } from "./user-avatar";
 import { useRouter } from "next/navigation";
 import { AnimatePresence } from "motion/react";
 import * as m from "motion/react-m";
@@ -12,6 +15,8 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 export function ProfileMenu() {
   const logout = usePlatformStore((state) => state.logout);
   const role = usePlatformStore((state) => state.user?.role);
+  const avatarUrl = usePlatformStore((state) => state.user?.avatarUrl);
+  const email = usePlatformStore((state) => state.user?.email);
   const { showAccount, name, openId } = usePresentedChrome();
   const router = useRouter();
   const setNav = usePlatformStore((state) => state.setNav);
@@ -42,46 +47,52 @@ export function ProfileMenu() {
   }, [open]);
 
   if (!showAccount) {
-    return <span className="block h-8 w-full" />;
+    return <span className={`block w-full ${collapsed ? "h-8" : "h-11"}`} />;
   }
 
   const label = name || "Account";
-  const { dark, toggle } = useTheme();
 
   return (
-    <div ref={rootRef} className="relative">
+    <div ref={rootRef} className="pm-root">
       <button
         type="button"
         aria-label="Account"
         aria-haspopup="menu"
         aria-expanded={open}
+        title={collapsed ? label : undefined}
         onClick={() => setOpen((current) => !current)}
-        className={`flex h-8 w-full min-w-0 items-center rounded-lg text-left text-[13px] font-normal tracking-[-0.006em] text-[#6e6e73] transition-colors ${
-          open ? "bg-black/[0.05] text-[#1d1d1f]" : "hover:bg-black/[0.04] hover:text-[#3a3a3c]"
-        }`}
+        className={`pm-trigger ${collapsed ? "is-collapsed" : ""} ${open ? "is-open" : ""}`}
       >
-        <span className="grid size-8 shrink-0 place-items-center">
-          <span className="grid size-6 place-items-center rounded-full bg-[#1d1d1f] text-[11px] font-normal text-white">
-            {label.slice(0, 1).toUpperCase()}
-          </span>
-        </span>
-        {collapsed ? null : <span className="min-w-0 flex-1 truncate pr-2">{label}</span>}
+        <UserAvatar name={label} src={avatarUrl} size={28} />
+        {collapsed ? null : (
+          <>
+            <span className="pm-trigger-text">
+              <span className="pm-trigger-name">{label}</span>
+              <PlanLabel short className="pm-trigger-plan" />
+            </span>
+            <ChevronsUpDown size={14} strokeWidth={1.6} aria-hidden className="pm-trigger-icon" />
+          </>
+        )}
       </button>
       <AnimatePresence>
         {open ? (
           <m.div
             role="menu"
             aria-label="Account"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            initial={{ opacity: 0, y: 4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 4 }}
             transition={{ duration: 0.16, ease: [0.22, 1, 0.36, 1] }}
-            className={`absolute z-40 rounded-[12px] border border-[#ececec] bg-white p-1 shadow-[0_12px_32px_rgba(0,0,0,0.08)] ${
-              collapsed
-                ? "bottom-0 left-full ml-2 w-44 origin-bottom-left"
-                : "bottom-[calc(100%+6px)] left-0 w-full origin-bottom"
-            }`}
+            className={`pm-menu ${collapsed ? "is-side" : "is-up"}`}
           >
+            <div className="pm-head">
+              <UserAvatar name={label} src={avatarUrl} size={34} />
+              <div className="min-w-0 flex-1">
+                <p className="pm-name">{label}</p>
+                {email ? <p className="pm-email">{email}</p> : null}
+              </div>
+            </div>
+            <div className="pm-sep" />
             {role === "admin" ? (
               <MenuOption
                 icon={<Shield size={15} strokeWidth={1.5} absoluteStrokeWidth />}
@@ -94,34 +105,30 @@ export function ProfileMenu() {
             ) : null}
             <MenuOption
               icon={<UserRound size={15} strokeWidth={1.5} absoluteStrokeWidth />}
-              label="Account"
+              label="Account settings"
               onClick={() => {
                 setOpen(false);
                 setNav("general");
               }}
             />
-            <div className="mx-1 my-1 h-px bg-fg/[0.08]" />
-            <button
-              type="button"
-              role="switch"
-              aria-checked={dark}
-              onClick={toggle}
-              suppressHydrationWarning
-              className="flex h-8 w-full items-center gap-2 rounded-lg px-2 text-left transition-colors hover:bg-[#f6f6f6]"
+            <a
+              role="menuitem"
+              className="pm-item"
+              href={supportHref("Runex support", email)}
+              onClick={() => setOpen(false)}
             >
-              <span className="grid size-5 shrink-0 place-items-center text-[#8e8e93]">
-                <Moon size={15} strokeWidth={1.5} absoluteStrokeWidth />
-              </span>
-              <span className="min-w-0 flex-1 truncate text-[13px] font-normal tracking-[-0.006em] text-[#3a3a3c]">
-                Dark mode
-              </span>
-              <span aria-hidden className={`runex-switch ${dark ? "is-on" : ""}`}>
-                <span />
-              </span>
-            </button>
+              <LifeBuoy size={15} strokeWidth={1.5} absoluteStrokeWidth />
+              <span className="min-w-0 flex-1 truncate">Contact support</span>
+            </a>
+            <div className="pm-theme">
+              <span>Theme</span>
+              <ThemeChoice size="sm" />
+            </div>
+            <div className="pm-sep" />
             <MenuOption
               icon={<LogOut size={15} strokeWidth={1.5} absoluteStrokeWidth />}
               label="Log out"
+              quiet
               onClick={() => {
                 setOpen(false);
                 void logout().then(() => router.replace("/sign-in"));
@@ -138,19 +145,21 @@ function MenuOption({
   icon,
   label,
   onClick,
+  quiet = false,
 }: {
   icon: ReactNode;
   label: string;
   onClick: () => void;
+  quiet?: boolean;
 }) {
   return (
     <button
       type="button"
       role="menuitem"
       onClick={onClick}
-      className="flex h-8 w-full items-center gap-2 rounded-lg px-2 text-left text-[13px] font-normal tracking-[-0.006em] text-[#3a3a3c] transition-colors hover:bg-[#f6f6f6]"
+      className={quiet ? "pm-item is-quiet" : "pm-item"}
     >
-      <span className="grid size-5 shrink-0 place-items-center text-[#8e8e93]">{icon}</span>
+      {icon}
       <span className="min-w-0 flex-1 truncate">{label}</span>
     </button>
   );

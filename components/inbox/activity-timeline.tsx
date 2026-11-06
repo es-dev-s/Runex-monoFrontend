@@ -629,7 +629,6 @@ function isDeploy(event: Deployment) {
   return (
     event.status === "success" ||
     event.status === "failed" ||
-    event.status === "running" ||
     event.status === "building" ||
     event.status === "cancelled"
   );

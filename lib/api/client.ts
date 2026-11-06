@@ -6,6 +6,8 @@
  * origin must be in the backend's CORS allow-list.
  */
 
+import { requestTrialNotice } from "@/lib/plan";
+
 export const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL ?? "").replace(/\/+$/, "");
 
 /** Error codes the UI branches on. The backend defines many more. */
@@ -28,6 +30,7 @@ export type ApiErrorCode =
   | "github_branches"
   | "too_large"
   | "invalid_zip"
+  | "trial_ended"
   | (string & {});
 
 export class ApiError extends Error {
@@ -164,7 +167,11 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
     throw new NetworkError(cause);
   }
 
-  if (!response.ok) throw await toApiError(response);
+  if (!response.ok) {
+    const error = await toApiError(response);
+    if (error.code === "trial_ended") requestTrialNotice();
+    throw error;
+  }
 
   // 204 and empty bodies are valid successes for DELETE and logout.
   if (response.status === 204) return undefined as T;

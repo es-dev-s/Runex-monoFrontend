@@ -18,7 +18,7 @@ const controlPlane = (
 ).replace(/\/+$/, "");
 
 function lanDevOrigins(): string[] {
-  const hosts = new Set(["127.0.0.1", "localhost", "app.runex.cloud"]);
+  const hosts = new Set(["127.0.0.1", "localhost", "app.runex.cloud", "aivex.art", "www.aivex.art"]);
   for (const ifaces of Object.values(os.networkInterfaces())) {
     for (const iface of ifaces ?? []) {
       const family = String(iface.family);

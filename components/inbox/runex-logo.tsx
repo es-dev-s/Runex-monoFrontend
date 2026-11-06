@@ -8,7 +8,7 @@ export function RunexLogo({ className }: { className?: string }) {
       width={30}
       height={30}
       unoptimized
-      className={`block ${className ?? ""}`}
+      className={`runex-logo block ${className ?? ""}`}
     />
   );
 }

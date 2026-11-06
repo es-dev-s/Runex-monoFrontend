@@ -1,5 +1,6 @@
 "use client";
 
+import { isComputeLocked, requestTrialNotice } from "@/lib/plan";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { ExternalLink, X } from "lucide-react";
 import { humanizeHttpBody, looksLikeMarkup, projects as projectsApi, type ServiceNode } from "@/lib/api";
@@ -112,6 +113,10 @@ export function ServicePanel({
   );
 
   function requestDeploy() {
+    if (isComputeLocked()) {
+      requestTrialNotice();
+      return;
+    }
     const first = node.status === "ready";
     confirm({
       title: first ? "Deploy this service?" : "Redeploy this service?",

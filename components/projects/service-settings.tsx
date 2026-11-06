@@ -1,7 +1,9 @@
 "use client";
 
 import { useRef, useState, type ReactNode } from "react";
-import { CircleStop, ExternalLink, Loader2, Play, RotateCw, Trash2 } from "lucide-react";
+import { CircleStop, ExternalLink, Loader2, Lock, Play, RotateCw, Trash2 } from "lucide-react";
+import { requestTrialNotice, TRIAL_ENDED_MESSAGE } from "@/lib/plan";
+import { usePlanView } from "@/lib/use-plan";
 import { ApiError, projects as projectsApi, type NodeUsage, type ServiceNode, type UsageLimits } from "@/lib/api";
 import type { DeployTab } from "@/components/projects/deploy-dialog";
 import { useConfirm } from "@/hooks/use-confirm";
@@ -144,6 +146,7 @@ export function ServiceSettings({
               </Action>
             ) : (
               <Action
+                compute
                 label="Start"
                 busy={Boolean(pending.start)}
                 onClick={() =>
@@ -162,7 +165,7 @@ export function ServiceSettings({
               </Action>
             )
           ) : empty ? (
-            <Action label="Deploy a source" onClick={() => onDeploySource()} primary>
+            <Action compute label="Deploy a source" onClick={() => onDeploySource()} primary>
               <Play size={12} strokeWidth={1.9} />
             </Action>
           ) : building ? (
@@ -184,6 +187,7 @@ export function ServiceSettings({
           ) : (
             <>
               <Action
+                compute
                 label={node.status === "ready" ? "Deploy" : "Redeploy"}
                 busy={Boolean(pending.deploy)}
                 primary
@@ -220,6 +224,7 @@ export function ServiceSettings({
                 </Action>
               ) : node.status === "stopped" ? (
                 <Action
+                  compute
                   label="Start"
                   busy={Boolean(pending.start)}
                   onClick={() =>
@@ -291,13 +296,31 @@ function Action({
   children,
   busy,
   primary,
+  compute,
 }: {
   label: string;
   onClick: () => void;
   children: ReactNode;
   busy?: boolean;
   primary?: boolean;
+  /** Builds, starts, or runs a container: off once the free trial has ended. */
+  compute?: boolean;
 }) {
+  const locked = usePlanView().locked && Boolean(compute);
+  if (locked) {
+    return (
+      <button
+        type="button"
+        aria-disabled="true"
+        title={TRIAL_ENDED_MESSAGE}
+        onClick={requestTrialNotice}
+        className="inline-flex h-8 cursor-not-allowed items-center gap-1.5 rounded-md bg-fg/[0.04] px-2.5 text-[12px] font-medium tracking-tight text-fg/40 ring-1 ring-fg/[0.06]"
+      >
+        <Lock size={12} strokeWidth={1.9} aria-hidden />
+        {label}
+      </button>
+    );
+  }
   return (
     <button
       type="button"

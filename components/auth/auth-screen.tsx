@@ -9,6 +9,14 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useId, useRef, useState, type FocusEvent, type FormEvent } from "react";
 
+const OAUTH_ERRORS: Record<string, string> = {
+  google_denied: "Google sign-in was cancelled. You can try again whenever you're ready.",
+  invalid_state: "That Google sign-in expired. Please try again.",
+  google_exchange: "We couldn't confirm your Google account. Please try again.",
+  unverified_email: "Your Google account needs a verified email to sign in.",
+  access_revoked: "This account no longer has access to Runex.",
+};
+
 function afterAuthPath() {
   const requested = safeInternalPath(new URLSearchParams(window.location.search).get("next"), "");
   const admin = usePlatformStore.getState().user?.role === "admin";
@@ -17,7 +25,7 @@ function afterAuthPath() {
   return admin ? "/admin" : "/app";
 }
 
-export function AuthScreen({ mode }: { mode: "sign-in" | "sign-up" }) {
+export function AuthScreen({ mode, oauthError }: { mode: "sign-in" | "sign-up"; oauthError?: string }) {
   const router = useRouter();
   const bootstrap = usePlatformStore((state) => state.bootstrap);
   const session = usePlatformStore((state) => state.session);
@@ -32,9 +40,13 @@ export function AuthScreen({ mode }: { mode: "sign-in" | "sign-up" }) {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [fields, setFields] = useState<Record<string, string>>({});
-  const [formError, setFormError] = useState("");
+  const [formError, setFormError] = useState(() =>
+    oauthError ? (OAUTH_ERRORS[oauthError] ?? "Google sign-in didn't finish. Please try again.") : "",
+  );
   const frameRef = useRef<HTMLElement>(null);
   const scrollerRef = useRef<HTMLDivElement>(null);
+  const redirecting = useRef(false);
+  const [leaving, setLeaving] = useState(false);
 
   useEffect(() => {
     const node = frameRef.current;
@@ -69,13 +81,34 @@ export function AuthScreen({ mode }: { mode: "sign-in" | "sign-up" }) {
     void bootstrap();
   }, [bootstrap]);
 
+  // A failed Google callback lands here with ?oauth_error=. The server page
+  // passes the code in, so the message renders on first paint; just tidy the URL.
   useEffect(() => {
-    if (session !== "in") return;
+    const url = new URL(window.location.href);
+    if (!url.searchParams.has("oauth_error")) return;
+    url.searchParams.delete("oauth_error");
+    window.history.replaceState(window.history.state, "", url.pathname + url.search + url.hash);
+  }, []);
+
+  // Coming back from Google with the browser Back button restores this page
+  // from the back/forward cache; let the button work again.
+  useEffect(() => {
+    const reset = (event: PageTransitionEvent) => {
+      if (event.persisted) setLeaving(false);
+    };
+    window.addEventListener("pageshow", reset);
+    return () => window.removeEventListener("pageshow", reset);
+  }, []);
+
+  useEffect(() => {
+    if (session !== "in" || redirecting.current) return;
+    redirecting.current = true;
     router.replace(afterAuthPath());
   }, [router, session]);
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (busy || leaving || redirecting.current || session === "in") return;
     setFields({});
     setFormError("");
 
@@ -102,138 +135,219 @@ export function AuthScreen({ mode }: { mode: "sign-in" | "sign-up" }) {
         return;
       }
     }
+  }
 
-    router.replace(afterAuthPath());
+  function edit(clearKey?: string) {
+    return (value: string) => {
+      if (clearKey) {
+        setFields((current) => (current[clearKey] ? { ...current, [clearKey]: "" } : current));
+      }
+      if (formError) setFormError("");
+      return value;
+    };
   }
 
   return (
     <main
       ref={frameRef}
-      className="auth-light fixed inset-x-0 top-0 flex h-dvh min-h-0 justify-center bg-white text-[#1c1c1c] [color-scheme:light]"
+      className="auth-light auth-stage fixed inset-x-0 top-0 flex h-dvh min-h-0 [color-scheme:light]"
     >
-      <div
-        ref={scrollerRef}
-        className="flex min-h-0 w-full max-w-[440px] flex-col overflow-y-auto overscroll-y-contain px-6 pt-[max(2rem,env(safe-area-inset-top))] pb-[max(2rem,env(safe-area-inset-bottom))]"
-      >
-      <div className="m-auto w-full max-w-[400px] py-6">
-        <div>
-          <div className="flex items-center gap-2.5">
-            <RunexLogo className="h-8 w-8" />
-            <span className="text-[18px] leading-none font-semibold tracking-[-0.03em] text-[#1c1c1c]">Runex</span>
-          </div>
-          <h1 className="mt-8 text-[34px] leading-[1.08] font-semibold tracking-[-0.04em] text-[#1c1c1c]">
-            {signingUp ? "Create your account" : "Sign in"}
-          </h1>
-          <p className="mt-2 text-[15px] leading-6 tracking-[-0.011em] text-[#6e6e73]">
-            {signingUp
-              ? "Your projects, deployments, and variables stay on this account."
-              : "Use the username or email on your Runex account."}
-          </p>
-        </div>
+      <div ref={scrollerRef} className="auth-scroll">
+        <div className="auth-layout">
+          <section className="auth-form-col">
+            <div className="auth-brand">
+              <RunexLogo className="h-7 w-7" />
+              <span className="auth-mark">Runex</span>
+            </div>
 
-        <form className="mt-8" onSubmit={(event) => void onSubmit(event)} noValidate>
-          {signingUp ? (
-            <>
-              <Field
-                id={`${formId}-username`}
-                label="Username"
-                value={username}
-                autoComplete="username"
-                enterKeyHint="next"
-                error={fields.username}
-                onChange={setUsername}
-              />
-              <Field
-                id={`${formId}-email`}
-                label="Email"
-                type="email"
-                inputMode="email"
-                value={email}
-                autoComplete="email"
-                enterKeyHint="next"
-                error={fields.email}
-                onChange={setEmail}
-              />
-            </>
-          ) : (
-            <Field
-              id={`${formId}-login`}
-              label="Username or email"
-              value={loginId}
-              autoComplete="username"
-              enterKeyHint="next"
-              error={fields.login}
-              onChange={setLoginId}
-            />
-          )}
-
-          <label className="mt-4 grid gap-2 text-[13px] font-medium tracking-[-0.011em] text-[#1c1c1c]" htmlFor={`${formId}-password`}>
-            Password
-            <span className="relative">
-              <input
-                id={`${formId}-password`}
-                type={showPassword ? "text" : "password"}
-                value={password}
-                autoComplete={signingUp ? "new-password" : "current-password"}
-                autoCapitalize="none"
-                autoCorrect="off"
-                spellCheck={false}
-                enterKeyHint="go"
-                aria-invalid={fields.password ? true : undefined}
-                aria-describedby={fields.password ? `${formId}-password-error` : undefined}
-                onFocus={revealField}
-                onChange={(event) => {
-                  setPassword(event.target.value);
-                  setFields((current) => ({ ...current, password: "" }));
-                  setFormError("");
-                }}
-                className={`${fieldClass} pr-12`}
-              />
-              <button
-                type="button"
-                aria-label={showPassword ? "Hide password" : "Show password"}
-                onClick={() => setShowPassword((current) => !current)}
-                className="absolute top-1/2 right-1 grid size-10 -translate-y-1/2 place-items-center text-[#8e8e93]"
-              >
-                {showPassword ? <EyeOff size={16} strokeWidth={1.75} /> : <Eye size={16} strokeWidth={1.75} />}
-              </button>
-            </span>
-            {fields.password ? (
-              <span id={`${formId}-password-error`} className="text-[12px] font-normal text-[#b42318]">
-                {fields.password}
-              </span>
-            ) : signingUp ? (
-              <span className="text-[13px] font-normal tracking-[-0.011em] text-[#6e6e73]">
-                At least 8 characters, with a letter and a number.
-              </span>
-            ) : null}
-          </label>
-
-          {formError ? (
-            <p className="mt-4 rounded-xl bg-[#fff6f5] px-3 py-2 text-[13px] leading-5 text-[#b42318]" role="alert">
-              {formError}
+            <div className="auth-form">
+            <h1 className="auth-title">
+              {signingUp ? (
+                <>
+                  Create your <em>account</em>
+                </>
+              ) : (
+                <>
+                  Welcome <em>back</em>
+                </>
+              )}
+            </h1>
+            <p className="auth-sub">
+              {signingUp
+                ? "Deploy from GitHub or a zip. Builds, containers, and HTTPS are handled for you."
+                : "Sign in to deploy and manage your apps on Runex."}
             </p>
-          ) : null}
 
-          <button
-            type="submit"
-            disabled={busy}
-            className="mt-6 h-12 w-full rounded-full bg-[#161616] text-[15px] font-medium tracking-[-0.011em] text-white transition-colors hover:bg-black disabled:opacity-40"
-          >
-            {busy ? "Working" : signingUp ? "Create account" : "Sign in"}
-          </button>
-        </form>
+            <a
+              href="/v1/auth/google"
+              aria-disabled={leaving || undefined}
+              onClick={(event) => {
+                // One OAuth start per click: a second one would replace the state cookie mid-flight.
+                if (leaving || busy || session === "in") {
+                  event.preventDefault();
+                  return;
+                }
+                setLeaving(true);
+              }}
+              className="auth-google mt-8 flex min-h-12 w-full items-center justify-center gap-3 rounded-[10px] border border-[#d9d4c6] bg-[#fdfcf8] px-4 py-3 text-[14px] font-medium text-[#26241c] transition-colors hover:border-[#55573f] hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#55573f]"
+            >
+              <svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true" className="shrink-0">
+                <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5Z" />
+                <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65Z" />
+                <path fill="#FBBC05" d="M10.53 28.59A14.41 14.41 0 0 1 9.75 24c0-1.59.27-3.13.78-4.59l-7.98-6.19A23.87 23.87 0 0 0 0 24c0 3.87.93 7.53 2.56 10.78l7.97-6.19Z" />
+                <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.91-5.8l-7.73-6c-2.15 1.45-4.92 2.3-8.18 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48Z" />
+              </svg>
+              {leaving ? "Opening Google…" : "Continue with Google"}
+            </a>
+            <div className="my-5 flex items-center gap-3 text-[12px] text-[#55573f]">
+              <span className="h-px flex-1 bg-[#ddd7c8]" aria-hidden="true" />
+              <span>or</span>
+              <span className="h-px flex-1 bg-[#ddd7c8]" aria-hidden="true" />
+            </div>
 
-        <p className="mt-5 text-[14px] leading-5 tracking-[-0.011em] text-[#6e6e73]">
-          {signingUp ? "Already have an account?" : "New to Runex?"}{" "}
-          <Link
-            href={signingUp ? "/sign-in" : "/sign-up"}
-            className="font-medium text-[#fd4e00] transition-colors hover:text-[#e04500]"
-          >
-            {signingUp ? "Sign in" : "Create an account"}
-          </Link>
-        </p>
-      </div>
+            <form className="mt-0" onSubmit={(event) => void onSubmit(event)} noValidate>
+              {signingUp ? (
+                <>
+                  <Field
+                    id={`${formId}-username`}
+                    label="Username"
+                    value={username}
+                    autoComplete="username"
+                    enterKeyHint="next"
+                    error={fields.username}
+                    onChange={(value) => setUsername(edit("username")(value))}
+                  />
+                  <Field
+                    id={`${formId}-email`}
+                    label="Email"
+                    type="email"
+                    inputMode="email"
+                    value={email}
+                    autoComplete="email"
+                    enterKeyHint="next"
+                    error={fields.email}
+                    onChange={(value) => setEmail(edit("email")(value))}
+                  />
+                </>
+              ) : (
+                <Field
+                  id={`${formId}-login`}
+                  label="Username or email"
+                  value={loginId}
+                  autoComplete="username"
+                  enterKeyHint="next"
+                  error={fields.login}
+                  onChange={(value) => setLoginId(edit("login")(value))}
+                />
+              )}
+
+              <label className="mt-4 grid gap-2 text-[13px] font-medium tracking-[-0.011em] text-[#26241c]" htmlFor={`${formId}-password`}>
+                Password
+                <span className="relative">
+                  <input
+                    id={`${formId}-password`}
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    autoComplete={signingUp ? "new-password" : "current-password"}
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    spellCheck={false}
+                    enterKeyHint="go"
+                    aria-invalid={fields.password ? true : undefined}
+                    aria-describedby={fields.password ? `${formId}-password-error` : undefined}
+                    onFocus={revealField}
+                    onChange={(event) => {
+                      setPassword(event.target.value);
+                      setFields((current) => (current.password ? { ...current, password: "" } : current));
+                      if (formError) setFormError("");
+                    }}
+                    className={`${fieldClass} pr-12`}
+                  />
+                  <button
+                    type="button"
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                    onClick={() => setShowPassword((current) => !current)}
+                    className="absolute top-1/2 right-1 grid size-10 -translate-y-1/2 place-items-center text-[#8a8374] transition-colors hover:text-[#26241c]"
+                  >
+                    {showPassword ? <EyeOff size={16} strokeWidth={1.75} /> : <Eye size={16} strokeWidth={1.75} />}
+                  </button>
+                </span>
+                {fields.password ? (
+                  <span id={`${formId}-password-error`} className="auth-error-text">
+                    {fields.password}
+                  </span>
+                ) : signingUp ? (
+                  <span className="text-[13px] font-normal tracking-[-0.011em] text-[#6d6a5e]">
+                    At least 8 characters, with a letter and a number.
+                  </span>
+                ) : null}
+              </label>
+
+              {formError ? (
+                <p className="auth-error mt-4" role="alert">
+                  {formError}
+                </p>
+              ) : null}
+
+              <button
+                type="submit"
+                disabled={busy || leaving || session === "in"}
+                aria-busy={busy || session === "in"}
+                className="auth-submit mt-7"
+              >
+                {busy || session === "in"
+                  ? signingUp
+                    ? "Creating account…"
+                    : "Signing in…"
+                  : signingUp
+                    ? "Create account"
+                    : "Sign in"}
+              </button>
+            </form>
+
+            <p className="mt-6 text-[14px] leading-5 tracking-[-0.011em] text-[#6d6a5e]">
+              {signingUp ? "Already have an account?" : "New to Runex?"}{" "}
+              <Link href={signingUp ? "/sign-in" : "/sign-up"} className="auth-link">
+                {signingUp ? "Sign in" : "Create an account"}
+              </Link>
+            </p>
+            </div>
+
+            <p className="auth-foot">
+              Need a hand? <a href="mailto:support@runex.cloud">support@runex.cloud</a>
+            </p>
+          </section>
+
+          <aside className="auth-art" aria-hidden>
+            {/* eslint-disable-next-line @next/next/no-img-element -- art-directed cover with explicit srcSet */}
+            <img
+              className="auth-art-photo"
+              src="/art/landscape.webp"
+              srcSet="/art/landscape-768.webp 768w, /art/landscape.webp 1152w"
+              sizes="(max-width: 900px) 100vw, 56vw"
+              alt=""
+              width={1152}
+              height={864}
+              fetchPriority="high"
+              decoding="async"
+            />
+            <div className="auth-art-veil" />
+            <div className="auth-art-dots" />
+            <div className="auth-art-copy">
+              <p className="auth-art-title">
+                Your code <em>ships itself</em>
+              </p>
+              <p className="auth-art-sub">
+                From a GitHub push to a live HTTPS URL, with builds, containers, and certificates handled for you.
+              </p>
+            </div>
+            <ul className="auth-art-facts">
+              <li>Push to deploy</li>
+              <li>HTTPS by default</li>
+              <li>Live logs</li>
+            </ul>
+          </aside>
+        </div>
       </div>
     </main>
   );
@@ -261,7 +375,7 @@ function Field({
   enterKeyHint?: "next" | "go";
 }) {
   return (
-    <label className="mt-4 grid gap-2 text-[13px] font-medium tracking-[-0.011em] text-[#1c1c1c] first:mt-0" htmlFor={id}>
+    <label className="mt-4 grid gap-2 text-[13px] font-medium tracking-[-0.011em] text-[#26241c] first:mt-0" htmlFor={id}>
       {label}
       <input
         id={id}
@@ -278,13 +392,13 @@ function Field({
         onChange={(event) => onChange(event.target.value)}
         className={fieldClass}
       />
-      {error ? <span className="text-[12px] font-normal text-[#b42318]">{error}</span> : null}
+      {error ? <span className="auth-error-text">{error}</span> : null}
     </label>
   );
 }
 
 const fieldClass =
-  "auth-field h-12 w-full rounded-[14px] border border-[#e6e6e6] bg-white px-3.5 text-base font-normal tracking-[-0.011em] text-[#1c1c1c] outline-none transition-[border-color,box-shadow] duration-200 placeholder:text-[#aeaeb2]";
+  "auth-field h-12 w-full rounded-[10px] border border-[#e4dfd0] bg-[#fdfcf8] px-3.5 text-base font-normal tracking-[-0.011em] text-[#26241c] outline-none transition-[border-color,box-shadow] duration-200 placeholder:text-[#aeaeb2]";
 
 function revealField(event: FocusEvent<HTMLInputElement>) {
   const target = event.currentTarget;

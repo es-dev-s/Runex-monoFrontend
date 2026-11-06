@@ -15,8 +15,10 @@ import {
 } from "@/lib/api";
 import { signInSchema, signUpSchema } from "@/lib/auth-schema";
 import { readUsageSnapshot } from "@/lib/panel-cache";
+import { isComputeLocked, requestTrialNotice } from "@/lib/plan";
 import { isDraftId } from "@/lib/projects";
 import { relativeTime } from "@/lib/relative-time";
+import { adoptAccountTheme, onThemePrefChosen, setThemePref, type ThemePref } from "@/lib/theme";
 import { placeProject, projectWorkspace } from "@/lib/workspaces";
 import {
   clearBoot,
@@ -127,6 +129,8 @@ type PlatformState = {
   register: (input: { username: string; email: string; password: string }) => Promise<AuthFailure>;
   logout: () => Promise<void>;
   setNav: (nav: NavId) => void;
+  /** Applies an appearance now and saves it to the signed-in account. */
+  setTheme: (pref: ThemePref) => void;
   toggleSelected: (id: string) => void;
   toggleAll: (ids: string[]) => void;
   clearSelected: () => void;
@@ -392,6 +396,37 @@ async function loadSecondary(gen: number, set: StoreSet, get: () => PlatformStat
   }
 }
 
+let pendingTheme: ThemePref | null = null;
+let savingTheme = false;
+
+/** Saves the latest appearance only, one request at a time, so an older pick can never land last. */
+async function saveTheme(pref: ThemePref) {
+  pendingTheme = pref;
+  if (savingTheme) return;
+  savingTheme = true;
+  try {
+    while (pendingTheme) {
+      const next = pendingTheme;
+      pendingTheme = null;
+      try {
+        await auth.preferences({ theme: next });
+      } catch {
+        // This device keeps the choice; the next sign-in uploads it again.
+      }
+    }
+  } finally {
+    savingTheme = false;
+  }
+}
+
+/** Lines up this device's theme with the account that just signed in. */
+function syncAccountTheme(user: User): User {
+  const push = adoptAccountTheme(user.theme);
+  if (!push) return user;
+  void saveTheme(push);
+  return { ...user, theme: push };
+}
+
 export const usePlatformStore = create<PlatformState>((set, get) => ({
   session: "loading",
   user: null,
@@ -442,7 +477,7 @@ export const usePlatformStore = create<PlatformState>((set, get) => ({
       (cause: unknown) => ({ ok: false as const, cause }),
     );
     try {
-      const user = await auth.me();
+      const user = syncAccountTheme(await auth.me());
       if (gen !== sessionGen) return;
       bootUserId = user.id;
       rememberAccount(user);
@@ -510,7 +545,7 @@ export const usePlatformStore = create<PlatformState>((set, get) => ({
     }
     set({ busy: true, error: null });
     try {
-      const user = await auth.login(parsed.data);
+      const user = syncAccountTheme(await auth.login(parsed.data));
       bootUserId = user.id;
       rememberAccount(user);
       set({ session: "in", signedIn: true, user, authOpen: false, busy: false });
@@ -531,7 +566,7 @@ export const usePlatformStore = create<PlatformState>((set, get) => ({
     }
     set({ busy: true, error: null });
     try {
-      const user = await auth.register(parsed.data);
+      const user = syncAccountTheme(await auth.register(parsed.data));
       bootUserId = user.id;
       rememberAccount(user);
       set({ session: "in", signedIn: true, user, authOpen: false, busy: false });
@@ -574,6 +609,9 @@ export const usePlatformStore = create<PlatformState>((set, get) => ({
     });
   },
 
+  // setThemePref notifies the onThemePrefChosen listener below, which saves to the account.
+  setTheme: (pref) => setThemePref(pref),
+
   setNav: (activeNav) => {
     rememberShell({ activeNav, openId: null, openName: "" });
     set({
@@ -611,7 +649,14 @@ export const usePlatformStore = create<PlatformState>((set, get) => ({
     set({ listView });
   },
 
-  setDeployOpen: (deployOpen) => set({ deployOpen }),
+  setDeployOpen: (deployOpen) => {
+    // New deploys cannot run once the trial has ended; explain why instead of opening a dead end.
+    if (deployOpen && isComputeLocked()) {
+      requestTrialNotice();
+      return;
+    }
+    set({ deployOpen });
+  },
   setAuthOpen: (authOpen) => set({ authOpen }),
 
   createProject: async (name) => {
@@ -794,3 +839,11 @@ export const usePlatformStore = create<PlatformState>((set, get) => ({
     });
   },
 }));
+
+onThemePrefChosen((pref) => {
+  const { user, signedIn } = usePlatformStore.getState();
+  if (!user || !signedIn) return;
+  if (user.theme !== pref) usePlatformStore.setState({ user: { ...user, theme: pref } });
+  void saveTheme(pref);
+});
+

@@ -1,28 +1,29 @@
-import Image from "next/image";
-
+/**
+ * Projects header art in the landing page's voice: cream paper, dot grid, and
+ * the branch. Plan status lives in the title bar, so this stays words-light.
+ * The branch is lazy-loaded with fixed dimensions and absolute placement, so
+ * it never moves the layout.
+ */
 export function UpgradeBanner() {
   return (
-    <div className="relative h-[168px] overflow-hidden bg-[var(--card)]">
-      <Image
-        src="/inbox-banner.png"
+    <div className="landing-banner">
+      <div className="landing-banner-dots" aria-hidden />
+      {/* eslint-disable-next-line @next/next/no-img-element -- decorative landing art */}
+      <img
+        className="landing-banner-branch"
+        src="/art/branch-r-480.webp"
+        srcSet="/art/branch-r-480.webp 480w, /art/branch-r.webp 864w"
+        sizes="300px"
         alt=""
-        fill
-        priority
-        sizes="(min-width: 1024px) 80vw, 100vw"
-        className="object-cover object-[62%_42%] [mask-image:linear-gradient(to_bottom,#000_0%,#000_36%,transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,#000_0%,#000_36%,transparent_100%)]"
+        width={480}
+        height={640}
+        loading="lazy"
+        decoding="async"
+        aria-hidden
       />
-      <div
-        className="pointer-events-none absolute inset-0 bg-gradient-to-r from-white/25 via-transparent to-transparent [mask-image:linear-gradient(to_bottom,#000_0%,#000_36%,transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,#000_0%,#000_36%,transparent_100%)]"
-      />
-      <div className="relative flex h-full items-center px-7 pb-6">
-        <div>
-          <p className="text-[22px] font-semibold leading-[1.15] tracking-[-0.03em] text-[#1a2433]">
-            Upgrade with AI
-          </p>
-          <p className="mt-1 text-[20px] font-medium leading-[1.15] tracking-[-0.03em] text-[#1a2433]">
-            For more powerful deploys
-          </p>
-        </div>
+      <div className="landing-banner-copy">
+        <p className="landing-banner-title">Your code ships itself</p>
+        <p className="landing-banner-sub">Push to GitHub or drop in a zip. Runex builds it into a live HTTPS URL.</p>
       </div>
     </div>
   );

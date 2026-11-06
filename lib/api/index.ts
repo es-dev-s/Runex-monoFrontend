@@ -5,6 +5,7 @@
  * in exactly one place: components never build URLs or guess payload shapes.
  */
 
+import { isComputeLocked, requestTrialNotice, TRIAL_ENDED_MESSAGE } from "@/lib/plan";
 import { ApiError, request, streamURL } from "./client";
 import type {
   ActivityStats,
@@ -51,6 +52,20 @@ export type NodeDeleteResult = {
   projectId?: string;
 };
 
+
+/**
+ * Same as `request`, for calls that build, start, or run containers. When the
+ * free trial has ended the API answers 402; refusing here first keeps the UI
+ * from flashing a "building" state for a call that cannot succeed.
+ */
+function computeRequest<T>(...args: Parameters<typeof request>): Promise<T> {
+  if (isComputeLocked()) {
+    requestTrialNotice();
+    return Promise.reject(new ApiError(402, "trial_ended", TRIAL_ENDED_MESSAGE));
+  }
+  return request<T>(...args);
+}
+
 export const auth = {
   me: (signal?: AbortSignal) =>
     request<{ user: User }>("/v1/auth/me", { signal }).then((r) => r.user),
@@ -65,6 +80,13 @@ export const auth = {
     request<{ user: User }>("/v1/auth/login", { method: "POST", body: input }).then((r) => r.user),
 
   logout: () => request<void>("/v1/auth/logout", { method: "POST" }),
+
+  /** Marks the first-run welcome as done for this account. Idempotent. */
+  onboarding: () =>
+    request<{ user: User }>("/v1/auth/me/onboarding", { method: "POST" }).then((r) => r.user),
+
+  preferences: (input: { theme: "system" | "light" | "dark" }) =>
+    request<{ user: User }>("/v1/auth/me/preferences", { method: "PATCH", body: input }).then((r) => r.user),
 };
 
 export const admin = {
@@ -121,7 +143,7 @@ export const projects = {
     request<Project>(`${projectPath(id)}/stop`, { method: "POST", query: { nodeId } }),
 
   start: (id: string, nodeId?: string) =>
-    request<Project>(`${projectPath(id)}/start`, { method: "POST", query: { nodeId } }),
+    computeRequest<Project>(`${projectPath(id)}/start`, { method: "POST", query: { nodeId } }),
 
   nodes: (id: string, signal?: AbortSignal) =>
     request<{ nodes: ServiceNode[] }>(`${projectPath(id)}/nodes`, { signal }).then(
@@ -131,7 +153,12 @@ export const projects = {
   addNode: (
     id: string,
     input: { kind: ServiceNode["kind"]; title?: string; caption?: string; x?: number; y?: number },
-  ) => request<ServiceNode>(`${projectPath(id)}/nodes`, { method: "POST", body: input }),
+  ) =>
+    // Databases start a container the moment they are added; a plain service node does not.
+    (input.kind === "postgresql" || input.kind === "redis" ? computeRequest<ServiceNode> : request<ServiceNode>)(
+      `${projectPath(id)}/nodes`,
+      { method: "POST", body: input },
+    ),
 
   updateNode: (
     projectId: string,
@@ -163,7 +190,7 @@ export const projects = {
     trigger: "manual" | "settings" | "github" = "manual",
     reuseSource = false,
   ) =>
-    request<DeployResult>(`${nodePath(projectId, nodeId)}/deploy`, {
+    computeRequest<DeployResult>(`${nodePath(projectId, nodeId)}/deploy`, {
       method: "POST",
       body: { trigger, ...(reuseSource ? { reuseSource: true } : {}) },
     }),
@@ -222,14 +249,14 @@ export const deploy = {
     const form = new FormData();
     form.set("file", file);
     if (nodeId) form.set("nodeId", nodeId);
-    return request<DeployResult>(`${projectPath(projectId)}/deploy/zip`, { method: "POST", form });
+    return computeRequest<DeployResult>(`${projectPath(projectId)}/deploy/zip`, { method: "POST", form });
   },
 
   html: (projectId: string, file: File, nodeId?: string) => {
     const form = new FormData();
     form.set("file", file);
     if (nodeId) form.set("nodeId", nodeId);
-    return request<DeployResult>(`${projectPath(projectId)}/deploy/html`, { method: "POST", form });
+    return computeRequest<DeployResult>(`${projectPath(projectId)}/deploy/html`, { method: "POST", form });
   },
 
   github: (
@@ -242,7 +269,7 @@ export const deploy = {
       installationId?: number;
       autoDeploy?: boolean;
     },
-  ) => request<DeployResult>(`${projectPath(projectId)}/deploy/github`, { method: "POST", body: input }),
+  ) => computeRequest<DeployResult>(`${projectPath(projectId)}/deploy/github`, { method: "POST", body: input }),
 };
 
 export const variables = {
@@ -288,7 +315,7 @@ export const variables = {
 
   /** Restarts the service so new values take effect. */
   apply: (projectId: string, node?: string) =>
-    request<Project>(`${projectPath(projectId)}/variables/apply`, {
+    computeRequest<Project>(`${projectPath(projectId)}/variables/apply`, {
       method: "POST",
       query: { node },
     }),

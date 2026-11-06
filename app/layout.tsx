@@ -1,11 +1,20 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
-import Script from "next/script";
+import { Instrument_Serif, Inter } from "next/font/google";
+import { THEME_BOOT_SCRIPT } from "@/lib/theme";
 import "./globals.css";
+
+const serif = Instrument_Serif({
+  subsets: ["latin"],
+  display: "swap",
+  weight: "400",
+  style: ["normal", "italic"],
+  variable: "--font-serif",
+});
 
 const inter = Inter({
   subsets: ["latin"],
   display: "swap",
+  variable: "--font-sans",
 });
 
 export const viewport: Viewport = {
@@ -56,11 +65,11 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${inter.className} h-full antialiased`} suppressHydrationWarning>
+    <html lang="en" className={`${inter.variable} ${serif.variable} ${inter.className} h-full antialiased`} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }} />
+      </head>
       <body suppressHydrationWarning className="h-full overflow-hidden bg-background text-foreground">
-        <Script id="runex-theme" strategy="beforeInteractive">
-          {`try{if(localStorage.getItem("runex.theme")==="dark"){document.documentElement.classList.add("dark");document.documentElement.style.colorScheme="dark"}}catch(e){}`}
-        </Script>
         {children}
       </body>
     </html>

@@ -21,6 +21,7 @@ import { ProjectWorkspace } from "@/components/projects/project-workspace";
 import { DashboardShell, useDashboardDrawer } from "./dashboard-drawer";
 import { Sidebar } from "./sidebar";
 import { UpgradeBanner } from "./upgrade-banner";
+import { AccountGates } from "./account-gates";
 import { HOME_WORKSPACE, useWorkspaces, WorkspaceBootProvider } from "@/lib/workspaces";
 import { useSessionWatch } from "@/hooks/use-session-watch";
 
@@ -195,6 +196,8 @@ function Shell() {
         <AnimatePresence>
           {deployOpen ? <NewProjectModal key="new-project" /> : null}
         </AnimatePresence>
+
+        <AccountGates />
 
         {error ? (
           <p className="border-b border-[#f2f2f2] bg-[#fff6f5] px-4 py-2 text-[12px] text-[#b42318]">
