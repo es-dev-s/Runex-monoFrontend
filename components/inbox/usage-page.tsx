@@ -43,11 +43,13 @@ export function WorkspaceUsage() {
     return () => window.clearInterval(timer);
   }, []);
 
+  const userId = user?.id;
+  const snapshotProjects = snapshot?.projects;
   const projects = useMemo(() => {
-    const list = snapshot?.projects ?? [];
-    if (!user?.id) return list;
-    return list.filter((project) => belongsToWorkspace(user.id, project.id, active.id));
-  }, [active.id, snapshot?.projects, user?.id]);
+    const list = snapshotProjects ?? [];
+    if (!userId) return list;
+    return list.filter((project) => belongsToWorkspace(userId, project.id, active.id));
+  }, [active.id, snapshotProjects, userId]);
 
   const totals = useMemo(() => sum(projects), [projects]);
   const consumers = useMemo(() => rank(projects), [projects]);
@@ -68,7 +70,7 @@ export function WorkspaceUsage() {
       <div className="flex items-center justify-between gap-3 px-1">
         <p className="text-[13px] tracking-[-0.011em] text-[#8e8e93]">1 GB memory · 5 GB disk</p>
         <p className="inline-flex shrink-0 items-center gap-1.5 text-[12px] tracking-[-0.006em] text-[#8e8e93] tabular-nums">
-          <span className={`size-1.5 rounded-full ${!pending && ageSeconds(snapshot, now) < 20 ? "bg-[#047857]" : "bg-[#aeaeb2]"}`} />
+          <span className={`size-1.5 rounded-full ${!pending && ageSeconds(snapshot, now) < 20 ? "bg-[#1d1d1f]" : "bg-[#aeaeb2]"}`} />
           {freshness(snapshot, now)}
         </p>
       </div>

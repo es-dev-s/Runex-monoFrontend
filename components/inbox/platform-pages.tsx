@@ -81,27 +81,23 @@ function GeneralPage() {
 
   return (
     <>
-      <section className="st-hero">
-        <Art />
-        <div className="st-hero-body st-hero-profile">
-          <UserAvatar name={display} src={user.avatarUrl} size={76} className="st-hero-avatar" />
-          <div className="min-w-0">
-            <p className="st-eyebrow">Your account</p>
-            <h1 className="st-hero-title">{display}</h1>
-            <p className="st-hero-sub">
-              <span>@{user.username}</span>
-              <span aria-hidden className="st-dot" />
-              <span>{user.email}</span>
-            </p>
-            <div className="st-hero-plan">
-              <PlanLabel variant="pill" />
-              <button type="button" className="st-link" onClick={() => setNav("plans")}>
-                View plan
-              </button>
-            </div>
+      <header className="st-head st-head-profile">
+        <UserAvatar name={display} src={user.avatarUrl} size={60} className="st-head-avatar" />
+        <div className="min-w-0">
+          <h1 className="st-title">{display}</h1>
+          <p className="st-sub st-sub-inline">
+            <span>@{user.username}</span>
+            <span aria-hidden className="st-dot" />
+            <span>{user.email}</span>
+          </p>
+          <div className="st-head-meta">
+            <PlanLabel variant="pill" />
+            <button type="button" className="st-link" onClick={() => setNav("plans")}>
+              View plan
+            </button>
           </div>
         </div>
-      </section>
+      </header>
 
       <Card title="Profile" description={google ? "Your name and photo come from your Google account." : "How you appear across Runex."}>
         <Row label="Display name">{display}</Row>
@@ -189,7 +185,9 @@ function PeoplePage() {
   const label = user.name || user.username;
   const since = joined(user.createdAt);
   return (
-    <Card title="People" description="Everyone with access to this workspace." meta="1 member">
+    <>
+      <PageHeader title="People" sub="Everyone with access to this workspace." />
+      <Card title="Members" meta="1 member">
       <div className="st-person">
         <UserAvatar name={label} src={user.avatarUrl} size={40} />
         <span className="min-w-0 flex-1">
@@ -205,7 +203,8 @@ function PeoplePage() {
           ) : null}
         </span>
       </div>
-    </Card>
+      </Card>
+    </>
   );
 }
 
@@ -219,34 +218,18 @@ function PlansPage() {
   const plan = usePlanView();
   return (
     <>
-      <section className="st-hero">
-        <Art />
-        <div className="st-hero-body">
-          <p className="st-eyebrow">Your plan</p>
-          <h1 className="st-hero-title">
-            {plan.status === "expired" ? (
-              <>
-                Your trial <em>has ended</em>
-              </>
-            ) : plan.status === "active" ? (
-              <>
-                You&apos;re on a <em>paid plan</em>
-              </>
-            ) : (
-              <>
-                You&apos;re on the <em>free trial</em>
-              </>
-            )}
-          </h1>
-          <p className="st-hero-sub">
-            {plan.status === "expired"
-              ? `${plan.summary} Your code and variables are safe. Contact support to run your projects again.`
-              : plan.status === "active"
-                ? "Thanks for building on Runex. Questions about your plan go straight to support, any time."
-                : `${plan.summary} Deploy real projects with every feature, and talk to us about pricing whenever you're ready.`}
-          </p>
-        </div>
-      </section>
+      <PageHeader
+        title={plan.status === "expired" ? "Your trial has ended" : plan.status === "active" ? "Paid plan" : "Free trial"}
+        sub={
+          plan.status === "expired"
+            ? `${plan.summary} Your code and variables are safe. Contact support to run your projects again.`
+            : plan.status === "active"
+              ? "Thanks for building on Runex. Questions about your plan go straight to support, any time."
+              : `${plan.summary} Deploy real projects with every feature, and talk to us about pricing whenever you're ready.`
+        }
+      >
+        <PlanLabel variant="pill" />
+      </PageHeader>
 
       <Card title="How pricing works" description="Pricing is set with you, not from a list.">
         <ol className="st-steps">
@@ -326,20 +309,14 @@ function BillingPage() {
   const paid = usePlanView().status === "active";
   return (
     <>
-      <section className="st-hero">
-        <Art />
-        <div className="st-hero-body">
-          <p className="st-eyebrow">Billing</p>
-          <h1 className="st-hero-title">
-            Handled <em>personally</em>
-          </h1>
-          <p className="st-hero-sub">
-            {paid
-              ? "Your plan is paid and active. Pricing was agreed with you directly, and billing questions go straight to support."
-              : "Your first 30 days are free. After that, pricing is agreed with you directly, matched to what you already pay for hosting."}
-          </p>
-        </div>
-      </section>
+      <PageHeader
+        title="Billing"
+        sub={
+          paid
+            ? "Your plan is paid and active. Pricing was agreed with you directly, and billing questions go straight to support."
+            : "Your first 30 days are free. After that, pricing is agreed with you directly, matched to what you already pay for hosting."
+        }
+      />
 
       <Card title="Summary">
         <Row label="Plan">
@@ -375,23 +352,15 @@ function BillingPage() {
 
 /* ------------------------------------------------------------------- Pieces */
 
-function Art() {
+function PageHeader({ title, sub, children }: { title: string; sub?: string; children?: ReactNode }) {
   return (
-    <>
-      <div className="st-hero-dots" aria-hidden />
-      {/* eslint-disable-next-line @next/next/no-img-element -- decorative landing art */}
-      <img
-        className="st-hero-branch"
-        src="/art/branch-r.webp"
-        srcSet="/art/branch-r-480.webp 480w, /art/branch-r.webp 864w"
-        sizes="300px"
-        alt=""
-        width={864}
-        height={1152}
-        decoding="async"
-        aria-hidden
-      />
-    </>
+    <header className="st-head">
+      <div className="min-w-0">
+        <h1 className="st-title">{title}</h1>
+        {sub ? <p className="st-sub">{sub}</p> : null}
+        {children ? <div className="st-head-meta">{children}</div> : null}
+      </div>
+    </header>
   );
 }
 
@@ -407,15 +376,15 @@ function Card({
   children: ReactNode;
 }) {
   return (
-    <section className="st-card">
-      <header className="st-card-head">
+    <section className="st-group">
+      <header className="st-group-head">
         <div className="min-w-0">
-          <h2 className="st-card-title">{title}</h2>
-          {description ? <p className="st-card-desc">{description}</p> : null}
+          <h2 className="st-group-title">{title}</h2>
+          {description ? <p className="st-group-desc">{description}</p> : null}
         </div>
-        {meta ? <span className="st-card-meta">{meta}</span> : null}
+        {meta ? <span className="st-group-meta">{meta}</span> : null}
       </header>
-      {children}
+      <div className="st-card">{children}</div>
     </section>
   );
 }
@@ -503,21 +472,20 @@ function CopyButton({ value }: { value: string }) {
 function AccountPending() {
   return (
     <>
-      <section className="st-hero">
-        <Art />
-        <div className="st-hero-body st-hero-profile">
-          <span className="st-skeleton st-skeleton-avatar" />
-          <div className="flex min-w-0 flex-col gap-2">
-            <span className="st-skeleton w-40" />
-            <span className="st-skeleton w-56" />
-          </div>
+      <header className="st-head st-head-profile" aria-busy>
+        <span className="st-skeleton st-skeleton-avatar" />
+        <div className="flex min-w-0 flex-col gap-2.5">
+          <span className="st-skeleton h-5 w-44" />
+          <span className="st-skeleton w-60" />
         </div>
-      </section>
-      <section className="st-card" aria-busy>
-        <div className="st-pad flex flex-col gap-3">
-          <span className="st-skeleton w-1/3" />
-          <span className="st-skeleton w-2/3" />
-          <span className="st-skeleton w-1/2" />
+      </header>
+      <section className="st-group" aria-busy>
+        <div className="st-card">
+          <div className="st-pad flex flex-col gap-3 pt-5">
+            <span className="st-skeleton w-1/3" />
+            <span className="st-skeleton w-2/3" />
+            <span className="st-skeleton w-1/2" />
+          </div>
         </div>
       </section>
     </>
