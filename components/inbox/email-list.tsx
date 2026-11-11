@@ -4,14 +4,13 @@ import { usePresentedChrome } from "@/components/inbox/chrome";
 import { statusColor, statusLabel } from "@/lib/inbox/present";
 import type { Service, ServiceStatus } from "@/lib/inbox/schema";
 import { usePlatformStore } from "@/lib/inbox/store";
-import { LayoutGrid, List, Menu, SquareCheck, Trash2 } from "lucide-react";
+import { Folder, LayoutGrid, List, Menu, Plus, SquareCheck, Trash2 } from "lucide-react";
 import {
   useEffect,
   useRef,
   useState,
   type KeyboardEvent as ReactKeyboardEvent,
   type MouseEvent as ReactMouseEvent,
-  type ReactNode,
 } from "react";
 import type { ServiceNode } from "@/lib/api";
 import { faceNodes, type BootNode } from "@/lib/boot";
@@ -26,12 +25,10 @@ export function ServiceList({
   services,
   faces,
   label,
-  banner,
 }: {
   services: Service[];
   faces?: Record<string, BootNode[]>;
   label: string;
-  banner?: ReactNode;
 }) {
   const selectedIds = usePlatformStore((state) => state.selectedIds);
   const removeProjects = usePlatformStore((state) => state.removeProjects);
@@ -41,6 +38,8 @@ export function ServiceList({
   const clearSelected = usePlatformStore((state) => state.clearSelected);
   const openProject = usePlatformStore((state) => state.openProject);
   const freshId = usePlatformStore((state) => state.freshId);
+  const listed = usePlatformStore((state) => state.listed);
+  const setDeployOpen = usePlatformStore((state) => state.setDeployOpen);
   const freshRow = useRef<HTMLLIElement>(null);
   const view = usePresentedChrome().listView;
   const setListView = usePlatformStore((state) => state.setListView);
@@ -109,24 +108,48 @@ export function ServiceList({
 
   return (
     <section className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[16px] border border-[#ececec] bg-white">
-      {banner ? (
-        <div className="landing-banner-wrap relative z-20 flex shrink-0 items-start gap-2 pr-2.5 pt-2.5">
-          <div className="min-w-0 flex-1">{banner}</div>
-          <div className="shrink-0">{toolbar}</div>
+      <header className="flex h-14 shrink-0 items-center justify-between gap-3 border-b border-[#f2f2f2] pr-2.5 pl-4">
+        <div className="flex min-w-0 items-baseline gap-2">
+          <h2 className="truncate text-[15px] font-semibold tracking-[-0.02em] text-[#1d1d1f]">{label}</h2>
+          {services.length > 0 ? (
+            <span className="shrink-0 text-[12px] tracking-[-0.006em] text-[#8e8e93] tabular-nums">{services.length}</span>
+          ) : null}
         </div>
-      ) : (
-        <div className="flex h-12 shrink-0 items-center justify-between px-3.5">
-          <p className="text-[13px] font-medium text-[#6a6a6a]">{label}</p>
-          {toolbar}
-        </div>
-      )}
+        {toolbar}
+      </header>
 
       {services.length === 0 ? (
-        <p
-          className={`px-4 py-10 text-center text-sm text-[#8e8e8e] ${banner ? "" : "border-t border-[#f2f2f2]"}`}
-        >
-          Nothing in {label.toLowerCase()} yet.
-        </p>
+        label === "Projects" && !listed ? (
+          <div className="flex flex-col gap-2 p-3" aria-busy aria-label="Loading projects">
+            {[0, 1, 2].map((index) => (
+              <div key={index} className="h-14 animate-pulse rounded-[12px] bg-[#f6f6f6]" />
+            ))}
+          </div>
+        ) : (
+          <div className="flex flex-1 flex-col items-center justify-center px-6 py-16 text-center">
+            <span className="grid size-11 place-items-center rounded-[12px] bg-[#f5f5f7] text-[#6e6e73]" aria-hidden>
+              <Folder size={18} strokeWidth={1.5} absoluteStrokeWidth />
+            </span>
+            <p className="mt-4 text-[15px] font-semibold tracking-[-0.02em] text-[#1d1d1f]">
+              {label === "Projects" ? "No projects yet" : `Nothing in ${label.toLowerCase()} yet`}
+            </p>
+            <p className="mt-1 max-w-[34ch] text-[13px] leading-5 tracking-[-0.006em] text-[#8e8e93]">
+              {label === "Projects"
+                ? "Push to GitHub or drop in a zip. Runex builds it into a live HTTPS URL."
+                : "Items you add here show up in this list."}
+            </p>
+            {label === "Projects" ? (
+              <button
+                type="button"
+                onClick={() => setDeployOpen(true)}
+                className="mt-5 inline-flex h-8 items-center gap-1.5 rounded-lg bg-[#1d1d1f] pr-3.5 pl-3 text-[13px] font-medium tracking-[-0.006em] text-white transition-[background-color,transform] duration-[var(--motion-fast)] ease-out hover:bg-black active:scale-[0.98]"
+              >
+                <Plus size={15} strokeWidth={1.5} absoluteStrokeWidth aria-hidden />
+                New project
+              </button>
+            ) : null}
+          </div>
+        )
       ) : view === "grid" ? (
         <ul className="grid min-h-0 flex-1 auto-rows-min grid-cols-1 content-start gap-4 overflow-y-auto p-3 sm:grid-cols-2 xl:grid-cols-3">
           {services.map((service) => {

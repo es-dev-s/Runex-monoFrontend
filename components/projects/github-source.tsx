@@ -502,7 +502,7 @@ function ConnectGitHub({
         <button
           type="button"
           onClick={onConnect}
-          className="mt-4 inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-lg bg-btn px-3.5 text-[13px] font-medium tracking-tight text-btn-fg transition-colors duration-150 ease-out hover:bg-brand-hover"
+          className="mt-4 inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-lg bg-btn px-3.5 text-[13px] font-medium tracking-tight text-btn-fg transition-colors duration-[var(--motion-fast)] ease-out hover:bg-brand-hover"
         >
           <GithubMark size={14} />
           Connect GitHub

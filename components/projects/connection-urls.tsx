@@ -66,7 +66,7 @@ export function ConnectionField({
           onClick={() => void copy()}
           disabled={!value}
           className={cn(
-            "grid size-9 shrink-0 place-items-center rounded-md transition-colors duration-150 ease-out md:size-7",
+            "grid size-9 shrink-0 place-items-center rounded-md transition-colors duration-[var(--motion-fast)] ease-out md:size-7",
             value ? "cursor-pointer text-fg/35 hover:bg-fg/[0.06] hover:text-fg/80" : "text-fg/15",
           )}
         >

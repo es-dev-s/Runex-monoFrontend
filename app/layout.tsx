@@ -1,15 +1,7 @@
 import type { Metadata, Viewport } from "next";
-import { Instrument_Serif, Inter } from "next/font/google";
+import { Inter } from "next/font/google";
 import { THEME_BOOT_SCRIPT } from "@/lib/theme";
 import "./globals.css";
-
-const serif = Instrument_Serif({
-  subsets: ["latin"],
-  display: "swap",
-  weight: "400",
-  style: ["normal", "italic"],
-  variable: "--font-serif",
-});
 
 const inter = Inter({
   subsets: ["latin"],
@@ -65,7 +57,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${inter.variable} ${serif.variable} ${inter.className} h-full antialiased`} suppressHydrationWarning>
+    <html lang="en" className={`${inter.variable} ${inter.className} h-full antialiased`} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }} />
       </head>

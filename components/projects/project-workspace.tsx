@@ -16,6 +16,7 @@ import { isDraftId, isEmptySlot, isPlacedNode, needsSource } from "@/lib/project
 import type { Point } from "@/lib/project-layout";
 import { hideNode, showNode, usePlatformStore } from "@/lib/inbox/store";
 import { forgetProjectLocal, readSelectedNode, rememberSelectedNode, rememberShell } from "@/lib/remember";
+import { Entrance } from "@/lib/motion";
 
 type DeployIntent = { nodeId?: string; tab: DeployTab };
 
@@ -229,7 +230,7 @@ export function ProjectWorkspace({ projectId }: { projectId: string }) {
           <button
             type="button"
             onClick={() => usePlatformStore.setState({ openId: null })}
-            className="mt-4 inline-flex h-9 cursor-pointer items-center rounded-lg bg-fg/[0.06] px-3.5 text-[13px] tracking-tight text-fg ring-1 ring-fg/[0.08] transition-colors duration-150 ease-out hover:bg-fg/[0.1]"
+            className="mt-4 inline-flex h-9 cursor-pointer items-center rounded-lg bg-fg/[0.06] px-3.5 text-[13px] tracking-tight text-fg ring-1 ring-fg/[0.08] transition-colors duration-[var(--motion-fast)] ease-out hover:bg-fg/[0.1]"
           >
             Back to projects
           </button>
@@ -317,61 +318,65 @@ export function ProjectWorkspace({ projectId }: { projectId: string }) {
             {!isDesktop ? (
               <SheetScrim scrimRef={sheet.scrimRef} onClose={sheet.requestClose} label="Close service details" />
             ) : null}
-            <div
-              ref={sheet.ref}
-              className="harbor-inspector absolute inset-x-0 bottom-0 z-30 flex h-full min-h-0 w-full flex-col overflow-hidden rounded-t-2xl pb-[env(safe-area-inset-bottom)] md:inset-y-0 md:right-0 md:left-auto md:z-20 md:h-auto md:rounded-none md:pb-0"
-              style={isDesktop ? { width: inspector.width } : undefined}
-            >
-              <button
-                type="button"
-                aria-label="Resize inspector"
-                title="Drag to resize"
-                onPointerDown={inspector.onPointerDown}
-                onPointerMove={inspector.onPointerMove}
-                onPointerUp={inspector.onPointerUp}
-                onPointerCancel={inspector.onPointerCancel}
-                className="group absolute inset-y-0 left-0 z-30 hidden w-3 cursor-col-resize touch-none outline-none md:block"
-              >
-                <span
-                  aria-hidden
-                  className="pointer-events-none absolute top-1/2 left-1/2 h-7 w-[3px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-fg/[0.12] opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-active:bg-fg/25 group-active:opacity-100"
-                />
-              </button>
-              <ServicePanel
-                key={selected.id}
-                projectId={projectId}
-                node={selected}
-                logs={logs}
-                live={live}
-                revealLogs={0}
-                onClose={sheet.requestClose}
-                onChanged={reload}
-                onRemove={() => {
-                  const nodeId = selected?.id;
-                  if (!nodeId || isDraftId(nodeId)) return;
-                  selectNode(null);
-                  hideNode(nodeId);
-                  dropNode(nodeId);
-                  void projectsApi.removeNode(projectId, nodeId).then((result) => {
-                    if (!result.projectDeleted) return;
-                    forgetProjectLocal(projectId);
-                    rememberShell({ openId: null });
-                    usePlatformStore.setState({ openId: null });
-                    void usePlatformStore.getState().reload();
-                  }).catch((cause) => {
-                    showNode(nodeId);
-                    restoreNode(nodeId);
-                    void reload();
-                    notify(
-                      "Could not remove that node",
-                      cause instanceof ApiError ? cause.message : "Could not remove that node.",
-                    );
-                  });
-                }}
-                onBuildStart={noteBuilding}
-                onDeploySource={(tab) => openDeploy(tab ?? "upload", selected.id)}
-              />
-            </div>
+            <Entrance>
+              {(enter) => (
+                <div
+                  ref={sheet.ref}
+                  className={`harbor-inspector ${enter ? "is-enter" : ""} absolute inset-x-0 bottom-0 z-30 flex h-full min-h-0 w-full flex-col overflow-hidden rounded-t-2xl pb-[env(safe-area-inset-bottom)] md:inset-y-0 md:right-0 md:left-auto md:z-20 md:h-auto md:rounded-none md:pb-0`}
+                  style={isDesktop ? { width: inspector.width } : undefined}
+                >
+                  <button
+                    type="button"
+                    aria-label="Resize inspector"
+                    title="Drag to resize"
+                    onPointerDown={inspector.onPointerDown}
+                    onPointerMove={inspector.onPointerMove}
+                    onPointerUp={inspector.onPointerUp}
+                    onPointerCancel={inspector.onPointerCancel}
+                    className="group absolute inset-y-0 left-0 z-30 hidden w-3 cursor-col-resize touch-none outline-none md:block"
+                  >
+                    <span
+                      aria-hidden
+                      className="pointer-events-none absolute top-1/2 left-1/2 h-7 w-[3px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-fg/[0.12] opacity-0 transition-opacity duration-[var(--motion-fast)] group-hover:opacity-100 group-active:bg-fg/25 group-active:opacity-100"
+                    />
+                  </button>
+                  <ServicePanel
+                    key={selected.id}
+                    projectId={projectId}
+                    node={selected}
+                    logs={logs}
+                    live={live}
+                    revealLogs={0}
+                    onClose={sheet.requestClose}
+                    onChanged={reload}
+                    onRemove={() => {
+                      const nodeId = selected?.id;
+                      if (!nodeId || isDraftId(nodeId)) return;
+                      selectNode(null);
+                      hideNode(nodeId);
+                      dropNode(nodeId);
+                      void projectsApi.removeNode(projectId, nodeId).then((result) => {
+                        if (!result.projectDeleted) return;
+                        forgetProjectLocal(projectId);
+                        rememberShell({ openId: null });
+                        usePlatformStore.setState({ openId: null });
+                        void usePlatformStore.getState().reload();
+                      }).catch((cause) => {
+                        showNode(nodeId);
+                        restoreNode(nodeId);
+                        void reload();
+                        notify(
+                          "Could not remove that node",
+                          cause instanceof ApiError ? cause.message : "Could not remove that node.",
+                        );
+                      });
+                    }}
+                    onBuildStart={noteBuilding}
+                    onDeploySource={(tab) => openDeploy(tab ?? "upload", selected.id)}
+                  />
+                </div>
+              )}
+            </Entrance>
           </>
         ) : null}
       </div>

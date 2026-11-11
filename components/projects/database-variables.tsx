@@ -138,7 +138,7 @@ export function DatabaseVariables({
           onClick={() => void copyAll()}
           disabled={!dotenv}
           className={cn(
-            "inline-flex h-7 items-center gap-1.5 rounded-md px-2 text-[11px] font-medium tracking-tight transition-colors duration-150 ease-out",
+            "inline-flex h-7 items-center gap-1.5 rounded-md px-2 text-[11px] font-medium tracking-tight transition-colors duration-[var(--motion-fast)] ease-out",
             dotenv
               ? "cursor-pointer text-fg/55 hover:bg-fg/[0.06] hover:text-fg"
               : "text-fg/20",
@@ -198,7 +198,7 @@ function CopyRow({ name, value, secret }: { name: string; value: string; secret:
         onClick={() => void copy()}
         disabled={!value}
         className={cn(
-          "grid size-9 shrink-0 place-items-center rounded-md transition-colors duration-150 ease-out md:size-7",
+          "grid size-9 shrink-0 place-items-center rounded-md transition-colors duration-[var(--motion-fast)] ease-out md:size-7",
           value ? "cursor-pointer text-fg/35 hover:bg-fg/[0.06] hover:text-fg/80" : "text-fg/15",
         )}
       >

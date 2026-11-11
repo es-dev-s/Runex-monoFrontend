@@ -130,7 +130,7 @@ export function ServiceOverview({
           <button
             type="button"
             onClick={onDeploy}
-            className="inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-md bg-btn px-3 text-[12px] font-medium tracking-tight text-btn-fg transition-colors duration-150 ease-out hover:bg-brand-hover"
+            className="inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-md bg-btn px-3 text-[12px] font-medium tracking-tight text-btn-fg transition-colors duration-[var(--motion-fast)] ease-out hover:bg-brand-hover"
           >
             <Play size={12} strokeWidth={1.9} />
             Deploy

@@ -10,6 +10,7 @@ import { ConnectionField, copyText } from "@/components/projects/connection-urls
 import { useConfirm } from "@/hooks/use-confirm";
 import { cn } from "@/lib/cn";
 import { servicePublicUrl } from "@/lib/projects";
+import { DURATION, EASE_OUT } from "@/lib/motion";
 
 export function CustomDomains({
   projectId,
@@ -367,7 +368,7 @@ export function CustomDomains({
               <button
                 type="button"
                 onClick={() => setSetupId(item.id)}
-                className="mt-3 inline-flex h-8 cursor-pointer items-center rounded-md bg-fg/[0.05] px-2.5 text-[12px] font-medium tracking-tight text-fg/75 ring-1 ring-fg/[0.07] transition-colors duration-150 ease-out hover:bg-fg/[0.1] hover:text-fg"
+                className="mt-3 inline-flex h-8 cursor-pointer items-center rounded-md bg-fg/[0.05] px-2.5 text-[12px] font-medium tracking-tight text-fg/75 ring-1 ring-fg/[0.07] transition-colors duration-[var(--motion-fast)] ease-out hover:bg-fg/[0.1] hover:text-fg"
               >
                 {item.status === "active" ? "DNS records" : "DNS setup"}
               </button>
@@ -458,7 +459,7 @@ function AddDomainDialog({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        transition={{ duration: 0.2 }}
+        transition={{ duration: DURATION.base, ease: EASE_OUT }}
         onClick={onClose}
         className="absolute inset-0 cursor-default bg-black/30"
       />
@@ -469,7 +470,7 @@ function AddDomainDialog({
         initial={{ y: "42%", opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: "28%", opacity: 0 }}
-        transition={{ duration: 0.34, ease: [0.22, 1, 0.36, 1] }}
+        transition={{ duration: 0.3, ease: EASE_OUT }}
         className="relative w-full rounded-t-2xl bg-card pb-[env(safe-area-inset-bottom)] shadow-[0_-18px_40px_rgba(0,0,0,0.16)] md:max-w-[28rem] md:rounded-2xl md:pb-0"
       >
         <div className="flex justify-center pt-2.5 md:hidden" aria-hidden>
@@ -566,7 +567,7 @@ function DnsDialog({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        transition={{ duration: 0.2 }}
+        transition={{ duration: DURATION.base, ease: EASE_OUT }}
         onClick={onClose}
         className="absolute inset-0 cursor-default bg-black/30"
       />
@@ -577,7 +578,7 @@ function DnsDialog({
         initial={{ y: "42%", opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: "28%", opacity: 0 }}
-        transition={{ duration: 0.34, ease: [0.22, 1, 0.36, 1] }}
+        transition={{ duration: 0.3, ease: EASE_OUT }}
         className="relative flex max-h-[min(86dvh,40rem)] w-full flex-col overflow-hidden rounded-t-2xl bg-card pb-[env(safe-area-inset-bottom)] shadow-[0_-18px_40px_rgba(0,0,0,0.16)] md:max-w-[28rem] md:rounded-2xl md:pb-0"
       >
         <div className="flex shrink-0 justify-center pt-2.5 md:hidden" aria-hidden>
@@ -745,7 +746,7 @@ function Ghost({
       onClick={onClick}
       disabled={busy}
       className={cn(
-        "inline-flex h-7 items-center gap-1 rounded-md px-2 text-[11px] font-medium tracking-tight transition-colors duration-150 ease-out",
+        "inline-flex h-7 items-center gap-1 rounded-md px-2 text-[11px] font-medium tracking-tight transition-colors duration-[var(--motion-fast)] ease-out",
         danger
           ? "text-rose-700 hover:bg-rose-500/10 hover:text-rose-800"
           : "bg-fg/[0.05] text-fg/70 ring-1 ring-fg/[0.07] hover:bg-fg/[0.1] hover:text-fg",

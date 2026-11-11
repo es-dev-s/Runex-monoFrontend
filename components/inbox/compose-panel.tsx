@@ -5,6 +5,7 @@ import { usePlatformStore } from "@/lib/inbox/store";
 import { useReducedMotion } from "motion/react";
 import * as m from "motion/react-m";
 import { useEffect, useId, useRef, useState, type FormEvent } from "react";
+import { DURATION, EASE_OUT } from "@/lib/motion";
 
 export function NewProjectModal() {
   const createProject = usePlatformStore((state) => state.createProject);
@@ -51,7 +52,7 @@ export function NewProjectModal() {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      transition={{ duration: reduce ? 0 : 0.18 }}
+      transition={{ duration: reduce ? 0 : DURATION.base, ease: EASE_OUT }}
     >
       <button
         type="button"
@@ -68,7 +69,7 @@ export function NewProjectModal() {
         initial={reduce ? false : { opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+        transition={{ duration: DURATION.slow, ease: EASE_OUT }}
         className="relative w-full max-w-[400px] rounded-[20px] border border-[#ececec] bg-white p-5 shadow-[0_24px_60px_rgba(0,0,0,0.12)]"
       >
         <h2 id={titleId} className="text-[16px] font-semibold tracking-[-0.02em] text-[#1c1c1c]">

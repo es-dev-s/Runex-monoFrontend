@@ -377,7 +377,7 @@ export function VariablesEditor({
           <button
             type="button"
             onClick={addRow}
-            className="inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-md px-2 text-[12px] font-medium tracking-tight text-fg/70 transition-colors duration-150 ease-out hover:bg-fg/[0.06] hover:text-fg"
+            className="inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-md px-2 text-[12px] font-medium tracking-tight text-fg/70 transition-colors duration-[var(--motion-fast)] ease-out hover:bg-fg/[0.06] hover:text-fg"
           >
             <Plus size={13} strokeWidth={1.75} />
             New variable
@@ -388,7 +388,7 @@ export function VariablesEditor({
               setError(null);
               setRawOpen(true);
             }}
-            className="inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-md px-2 text-[12px] font-medium tracking-tight text-fg/70 transition-colors duration-150 ease-out hover:bg-fg/[0.06] hover:text-fg"
+            className="inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-md px-2 text-[12px] font-medium tracking-tight text-fg/70 transition-colors duration-[var(--motion-fast)] ease-out hover:bg-fg/[0.06] hover:text-fg"
           >
             <FileText size={13} strokeWidth={1.75} />
             Raw Editor
@@ -399,7 +399,7 @@ export function VariablesEditor({
               setError(null);
               setSecretsOpen(true);
             }}
-            className="inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-md px-2 text-[12px] font-medium tracking-tight text-fg/70 transition-colors duration-150 ease-out hover:bg-fg/[0.06] hover:text-fg"
+            className="inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-md px-2 text-[12px] font-medium tracking-tight text-fg/70 transition-colors duration-[var(--motion-fast)] ease-out hover:bg-fg/[0.06] hover:text-fg"
           >
             <KeyRound size={13} strokeWidth={1.75} />
             Import secrets
@@ -409,7 +409,7 @@ export function VariablesEditor({
             onClick={() => void copyAll()}
             disabled={items.length === 0}
             className={cn(
-              "ml-auto inline-flex h-8 items-center gap-1.5 rounded-md px-2 text-[12px] font-medium tracking-tight transition-colors duration-150 ease-out",
+              "ml-auto inline-flex h-8 items-center gap-1.5 rounded-md px-2 text-[12px] font-medium tracking-tight transition-colors duration-[var(--motion-fast)] ease-out",
               items.length === 0
                 ? "text-fg/20"
                 : "cursor-pointer text-fg/70 hover:bg-fg/[0.06] hover:text-fg",
@@ -425,7 +425,7 @@ export function VariablesEditor({
           onClick={() => void apply()}
           disabled={applying}
           className={cn(
-            "mt-2 inline-flex h-8 w-full items-center justify-center gap-1.5 rounded-md text-[12px] font-medium tracking-tight transition-colors duration-150 ease-out",
+            "mt-2 inline-flex h-8 w-full items-center justify-center gap-1.5 rounded-md text-[12px] font-medium tracking-tight transition-colors duration-[var(--motion-fast)] ease-out",
             applied
               ? "bg-emerald-400/15 text-emerald-800"
               : "bg-fg/[0.06] text-fg/75 ring-1 ring-fg/[0.08] hover:bg-fg/[0.1] hover:text-fg",
@@ -520,7 +520,7 @@ function VariableRow({
             aria-label={`Delete ${name}`}
             onClick={onRemove}
             disabled={disabled}
-            className="grid size-7 shrink-0 cursor-pointer place-items-center rounded text-fg/25 opacity-100 transition-[opacity,color] duration-150 ease-out hover:text-rose-700 focus-visible:opacity-100 md:opacity-0 md:group-hover:opacity-100"
+            className="grid size-7 shrink-0 cursor-pointer place-items-center rounded text-fg/25 opacity-100 transition-[opacity,color] duration-[var(--motion-fast)] ease-out hover:text-rose-700 focus-visible:opacity-100 md:opacity-0 md:group-hover:opacity-100"
           >
             <Trash2 size={12} strokeWidth={1.75} />
           </button>
@@ -547,7 +547,7 @@ function CopyButton({ name, value }: { name: string; value: string }) {
       onClick={() => void copy()}
       disabled={!value}
       className={cn(
-        "grid size-7 shrink-0 place-items-center rounded transition-[opacity,color] duration-150 ease-out",
+        "grid size-7 shrink-0 place-items-center rounded transition-[opacity,color] duration-[var(--motion-fast)] ease-out",
         value
           ? "cursor-pointer text-fg/25 opacity-100 hover:text-fg/80 focus-visible:opacity-100 md:opacity-0 md:group-hover:opacity-100"
           : "text-fg/10",

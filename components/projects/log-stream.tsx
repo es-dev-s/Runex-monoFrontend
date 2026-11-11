@@ -77,7 +77,7 @@ export function LogStream({ logs, empty }: { logs: StreamLog[]; empty?: ReactNod
         <button
           type="button"
           onClick={() => setPinned(true)}
-          className="absolute bottom-3 left-1/2 -translate-x-1/2 cursor-pointer rounded-full bg-fg/10 px-3 py-1 text-[11px] tracking-tight text-fg/80 ring-1 ring-fg/[0.12] backdrop-blur-sm transition-colors duration-150 ease-out hover:bg-fg/15"
+          className="absolute bottom-3 left-1/2 -translate-x-1/2 cursor-pointer rounded-full bg-fg/10 px-3 py-1 text-[11px] tracking-tight text-fg/80 ring-1 ring-fg/[0.12] backdrop-blur-sm transition-colors duration-[var(--motion-fast)] ease-out hover:bg-fg/15"
         >
           Jump to latest
         </button>

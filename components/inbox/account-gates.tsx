@@ -5,9 +5,13 @@ import type { User } from "@/lib/api/types";
 import { usePlatformStore } from "@/lib/inbox/store";
 import { setComputeLocked, supportHref, TRIAL_DAYS, TRIAL_NOTICE_EVENT } from "@/lib/plan";
 import { usePlanView } from "@/lib/use-plan";
-import { ArrowUpRight } from "lucide-react";
+import { ArrowUpRight, Check, PauseCircle } from "lucide-react";
+import { AnimatePresence, useReducedMotion } from "motion/react";
+import * as m from "motion/react-m";
 import { useCallback, useEffect, useRef, useState, type ReactNode, type RefObject } from "react";
 import { createPortal } from "react-dom";
+import { RunexLogo } from "./runex-logo";
+import { DURATION, EASE_OUT } from "@/lib/motion";
 
 const WELCOME_KEY = (id: string) => `runex.welcomed.${id}`;
 const IGNORE_KEY = (id: string, ends: string) => `runex.trial-ignored.${id}.${ends}`;
@@ -154,20 +158,24 @@ export function AccountGates() {
     setIgnored((current) => ({ ...current, [ignoreKey]: true }));
   }, [ignoreKey]);
 
+  let gate: ReactNode = null;
   if (signedIn && preview) {
     const close = () => {
       clearPreviewParam();
       setPreview(null);
     };
-    return preview === "welcome" ? (
-      <Welcome onContinue={close} />
-    ) : (
-      <TrialEnded email={user?.email} onDismiss={close} />
-    );
+    gate =
+      preview === "welcome" ? (
+        <Welcome key="welcome" onContinue={close} />
+      ) : (
+        <TrialEnded key="ended" email={user?.email} onDismiss={close} />
+      );
+  } else if (showWelcome) {
+    gate = <Welcome key="welcome" onContinue={finishWelcome} />;
+  } else if (showEnded) {
+    gate = <TrialEnded key="ended" email={user?.email} onDismiss={dismissEnded} />;
   }
-  if (showWelcome) return <Welcome onContinue={finishWelcome} />;
-  if (showEnded) return <TrialEnded email={user?.email} onDismiss={dismissEnded} />;
-  return null;
+  return <AnimatePresence mode="wait">{gate}</AnimatePresence>;
 }
 
 /* ---------------------------------------------------------------- modules */
@@ -175,20 +183,23 @@ export function AccountGates() {
 function Welcome({ onContinue }: { onContinue: () => void }) {
   const primary = useRef<HTMLButtonElement>(null);
   return (
-    <FloatingModule labelledBy="gate-welcome-title" describedBy="gate-welcome-note" initialFocus={primary} art="day">
-      <p className="gate-eyebrow">Your account is ready</p>
+    <FloatingModule labelledBy="gate-welcome-title" describedBy="gate-welcome-note" initialFocus={primary}>
+      <span className="gate-mark" aria-hidden>
+        <RunexLogo className="h-[22px] w-[22px]" />
+      </span>
       <h2 id="gate-welcome-title" className="gate-title">
-        Welcome to <br />
-        <em>Runex Cloud</em>
+        Welcome to Runex Cloud
       </h2>
       <p id="gate-welcome-note" className="gate-note">
-        From a GitHub push to a live HTTPS URL. <br className="gate-br" />
-        Builds, containers and certificates, handled.
+        From a GitHub push to a live HTTPS URL. Builds, containers and certificates, handled.
       </p>
       <ul className="gate-facts" aria-label="Included">
-        <li>{TRIAL_DAYS}-day free trial</li>
-        <li>Isolated apps</li>
-        <li>Support 24/7</li>
+        {[`${TRIAL_DAYS}-day free trial`, "Isolated apps", "Support 24/7"].map((fact) => (
+          <li key={fact}>
+            <Check size={14} strokeWidth={2} aria-hidden />
+            {fact}
+          </li>
+        ))}
       </ul>
       <div className="gate-actions">
         <button ref={primary} type="button" className="gate-btn gate-btn-primary" onClick={onContinue}>
@@ -202,15 +213,15 @@ function Welcome({ onContinue }: { onContinue: () => void }) {
 function TrialEnded({ email, onDismiss }: { email?: string; onDismiss: () => void }) {
   const primary = useRef<HTMLAnchorElement>(null);
   return (
-    <FloatingModule labelledBy="gate-ended-title" describedBy="gate-ended-note" initialFocus={primary} art="dusk">
-      <p className="gate-eyebrow is-ended">Free trial</p>
+    <FloatingModule labelledBy="gate-ended-title" describedBy="gate-ended-note" initialFocus={primary}>
+      <span className="gate-mark" aria-hidden>
+        <PauseCircle size={20} strokeWidth={1.6} />
+      </span>
       <h2 id="gate-ended-title" className="gate-title">
-        Your free trial <br />
-        <em>has ended</em>
+        Your free trial has ended
       </h2>
       <p id="gate-ended-note" className="gate-note">
-        Your code, variables and settings are safe. <br className="gate-br" />
-        Projects stay paused until your plan is set.
+        Your code, variables and settings are safe. Projects stay paused until your plan is set.
       </p>
       <div className="gate-actions">
         <a
@@ -241,15 +252,14 @@ function FloatingModule({
   labelledBy,
   describedBy,
   initialFocus,
-  art,
 }: {
   children: ReactNode;
   labelledBy: string;
   describedBy: string;
   initialFocus: RefObject<HTMLElement | null>;
-  art: "day" | "dusk";
 }) {
   const card = useRef<HTMLDivElement>(null);
+  const still = useReducedMotion();
 
   useEffect(() => {
     const root = document.documentElement;
@@ -300,32 +310,28 @@ function FloatingModule({
   }, [initialFocus]);
 
   return createPortal(
-    <div className="gate-overlay">
-      <div
+    <m.div
+      className="gate-overlay"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0, transition: { duration: DURATION.fast, ease: EASE_OUT } }}
+      transition={{ duration: DURATION.base, ease: EASE_OUT }}
+    >
+      <m.div
         ref={card}
         role="dialog"
         aria-modal="true"
         aria-labelledby={labelledBy}
         aria-describedby={describedBy}
         className="gate-card"
+        initial={still ? { opacity: 0 } : { opacity: 0, y: 8, scale: 0.985 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={still ? { opacity: 0 } : { opacity: 0, y: 4, scale: 0.99, transition: { duration: DURATION.fast, ease: EASE_OUT } }}
+        transition={{ duration: DURATION.slow, ease: EASE_OUT }}
       >
-        <div className="gate-sheet">
-          <div className={`gate-art is-${art}`} aria-hidden>
-            {/* eslint-disable-next-line @next/next/no-img-element -- decorative landing art */}
-            <img
-              src="/art/landscape-768.webp"
-              srcSet="/art/landscape-768.webp 768w, /art/landscape.webp 1152w"
-              sizes="400px"
-              alt=""
-              loading="lazy"
-              decoding="async"
-            />
-            <span className="gate-art-dots" />
-          </div>
-          <div className="gate-body">{children}</div>
-        </div>
-      </div>
-    </div>,
+        {children}
+      </m.div>
+    </m.div>,
     document.body,
   );
 }

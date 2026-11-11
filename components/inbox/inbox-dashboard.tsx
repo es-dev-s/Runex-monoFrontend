@@ -7,7 +7,7 @@ import { formatCount } from "@/lib/inbox/format";
 import type { NavId, Service } from "@/lib/inbox/schema";
 import { usePlatformStore } from "@/lib/inbox/store";
 import { readShell } from "@/lib/remember";
-import { AnimatePresence, LazyMotion } from "motion/react";
+import { AnimatePresence, LazyMotion, MotionConfig } from "motion/react";
 import { ChevronRight, Menu } from "lucide-react";
 import dynamic from "next/dynamic";
 import { Suspense, useEffect, useLayoutEffect, useState } from "react";
@@ -16,14 +16,15 @@ import { ChromeProvider, usePresentedChrome } from "./chrome";
 import { ActivityTimeline } from "./activity-timeline";
 import { ServiceList } from "./email-list";
 import { NotificationBell } from "./notification-bell";
+import { MobileAccountButton } from "./profile-menu";
 import { PlatformPage } from "./platform-pages";
 import { ProjectWorkspace } from "@/components/projects/project-workspace";
 import { DashboardShell, useDashboardDrawer } from "./dashboard-drawer";
 import { Sidebar } from "./sidebar";
-import { UpgradeBanner } from "./upgrade-banner";
 import { AccountGates } from "./account-gates";
 import { HOME_WORKSPACE, useWorkspaces, WorkspaceBootProvider } from "@/lib/workspaces";
 import { useSessionWatch } from "@/hooks/use-session-watch";
+import { EntranceFrame, markShellPainted } from "@/lib/motion";
 
 const loadMotion = () => import("motion/react").then((mod) => mod.domAnimation);
 
@@ -71,9 +72,12 @@ export function InboxDashboard({ boot, workspaceRaw }: { boot: Boot; workspaceRa
     <WorkspaceBootProvider raw={workspaceRaw}>
     <ChromeProvider boot={boot}>
       <LazyMotion features={loadMotion} strict>
-        <Suspense fallback={null}>
-          <Shell />
-        </Suspense>
+        {/* Honour the OS "reduce motion" setting: motion/react drops transforms, keeps fades. */}
+        <MotionConfig reducedMotion="user">
+          <Suspense fallback={null}>
+            <Shell />
+          </Suspense>
+        </MotionConfig>
       </LazyMotion>
     </ChromeProvider>
     </WorkspaceBootProvider>
@@ -112,7 +116,10 @@ function Shell() {
   }, [boot.openId, boot.sort, chrome.activeNav]);
 
   useEffect(() => {
-    const frame = requestAnimationFrame(() => setMotionOn(true));
+    const frame = requestAnimationFrame(() => {
+      markShellPainted();
+      setMotionOn(true);
+    });
     return () => cancelAnimationFrame(frame);
   }, []);
 
@@ -151,7 +158,6 @@ function Shell() {
     activeNav === "projects" ||
     activeNav === "pinned" ||
     activeNav === "servers";
-  const showBanner = activeNav === "projects";
 
   const opened = projects.find((project) => project.id === openId) ?? null;
   const cachedName =
@@ -190,7 +196,12 @@ function Shell() {
               onBack={() => setNav(activeNav)}
             />
           </div>
-          {showAccount ? <NotificationBell /> : null}
+          {showAccount ? (
+            <div className="flex shrink-0 items-center gap-1">
+              <NotificationBell />
+              <MobileAccountButton />
+            </div>
+          ) : null}
         </header>
 
         <AnimatePresence>
@@ -222,7 +233,10 @@ function Shell() {
               : "min-h-0 flex-1 overflow-y-auto px-3 pt-2.5 pb-6"
           }
         >
-          <div className={auditView || listView ? "flex min-h-0 flex-1 flex-col" : "flex flex-col gap-3"}>
+          <EntranceFrame
+            key={auditView ? "audit" : listView ? "list" : activeNav}
+            className={auditView || listView ? "flex min-h-0 flex-1 flex-col" : "flex flex-col gap-3"}
+          >
             {auditView ? (
               <ActivityTimeline />
             ) : listView ? (
@@ -230,7 +244,6 @@ function Shell() {
                 services={visibleOrPreview}
                 faces={bootFaces(boot)}
                 label={listLabel}
-                banner={showBanner ? <UpgradeBanner /> : undefined}
               />
             ) : isPlatform(activeNav) ? (
               <PlatformPage nav={activeNav} />
@@ -253,7 +266,7 @@ function Shell() {
                 </p>
               </section>
             )}
-          </div>
+          </EntranceFrame>
         </div>
         )}
       </main>

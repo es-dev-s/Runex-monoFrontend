@@ -1066,7 +1066,7 @@ export function ProjectCanvas({
                 <button
                   type="button"
                   onClick={onAdd}
-                  className="mt-5 inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-lg bg-btn px-3.5 text-[13px] font-medium tracking-tight text-btn-fg transition-colors duration-150 ease-out hover:bg-brand-hover"
+                  className="mt-5 inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-lg bg-btn px-3.5 text-[13px] font-medium tracking-tight text-btn-fg transition-colors duration-[var(--motion-fast)] ease-out hover:bg-brand-hover"
                 >
                   <Plus size={14} strokeWidth={1.75} />
                   Deploy a service
@@ -1265,7 +1265,7 @@ function CanvasControl({
       aria-label={label}
       title={label}
       onClick={onClick}
-      className="grid size-10 cursor-pointer place-items-center rounded-lg text-fg/55 transition-colors duration-150 ease-out hover:bg-fg/[0.07] hover:text-fg md:size-8"
+      className="grid size-10 cursor-pointer place-items-center rounded-lg text-fg/55 transition-colors duration-[var(--motion-fast)] ease-out hover:bg-fg/[0.07] hover:text-fg md:size-8"
     >
       {children}
     </button>

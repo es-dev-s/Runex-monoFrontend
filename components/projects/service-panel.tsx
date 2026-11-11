@@ -190,7 +190,7 @@ export function ServicePanel({
           type="button"
           aria-label="Close panel"
           onClick={onClose}
-          className="grid size-9 shrink-0 cursor-pointer place-items-center rounded-md text-fg/35 transition-colors duration-150 ease-out hover:bg-fg/[0.06] hover:text-fg md:size-7"
+          className="grid size-9 shrink-0 cursor-pointer place-items-center rounded-md text-fg/35 transition-colors duration-[var(--motion-fast)] ease-out hover:bg-fg/[0.06] hover:text-fg md:size-7"
         >
           <X size={14} strokeWidth={1.75} />
         </button>
@@ -201,7 +201,7 @@ export function ServicePanel({
           href={visitURL}
           target="_blank"
           rel="noreferrer"
-          className="flex shrink-0 items-center gap-1.5 border-b border-fg/[0.06] px-3.5 py-2 font-mono text-[11px] text-[#1d4ed8] transition-colors duration-150 ease-out hover:text-[#1e3a8a]"
+          className="flex shrink-0 items-center gap-1.5 border-b border-fg/[0.06] px-3.5 py-2 font-mono text-[11px] text-[#1d4ed8] transition-colors duration-[var(--motion-fast)] ease-out hover:text-[#1e3a8a]"
         >
           {node.primaryKind === "custom" ? (
             <span className="shrink-0 rounded-full bg-emerald-500/10 px-1.5 py-0.5 text-[9px] font-medium tracking-[0.12em] text-emerald-800 uppercase">
@@ -313,7 +313,7 @@ function PanelTab({
       aria-selected={active}
       onClick={onClick}
       className={cn(
-        "shrink-0 cursor-pointer whitespace-nowrap border-b-2 px-2.5 py-2.5 text-[12px] font-medium tracking-tight transition-colors duration-150 ease-out md:min-w-0 md:flex-1 md:truncate md:px-1.5 md:py-2 md:text-center",
+        "shrink-0 cursor-pointer whitespace-nowrap border-b-2 px-2.5 py-2.5 text-[12px] font-medium tracking-tight transition-colors duration-[var(--motion-fast)] ease-out md:min-w-0 md:flex-1 md:truncate md:px-1.5 md:py-2 md:text-center",
         active ? "border-fg/20 text-fg" : "border-transparent text-fg/40 hover:text-fg/75",
       )}
     >
