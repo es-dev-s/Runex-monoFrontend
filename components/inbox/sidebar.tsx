@@ -72,7 +72,7 @@ export function Sidebar({
     <aside
       className={
         sheet
-          ? "relative z-20 flex h-full w-full shrink-0 flex-col overflow-y-auto bg-[var(--rail)] px-2 py-3 shadow-[inset_-1px_0_0_var(--line)]"
+          ? "relative z-20 flex h-full w-full shrink-0 flex-col overflow-y-auto bg-[var(--rail)] px-2 pt-[max(12px,env(safe-area-inset-top))] pb-[max(12px,env(safe-area-inset-bottom))] shadow-[inset_-1px_0_0_var(--line)]"
           : `relative z-20 hidden shrink-0 flex-col bg-[var(--rail)] px-2 py-3 shadow-[inset_-1px_0_0_var(--line)] md:flex ${
               collapsed ? "w-12" : "w-[216px]"
             }`
@@ -144,7 +144,7 @@ export function Sidebar({
       </nav>
 
       <div className="mt-3 border-t border-black/[0.06] pt-2">
-        <ProfileMenu />
+        <ProfileMenu sheet={sheet} />
       </div>
     </aside>
   );

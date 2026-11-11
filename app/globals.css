@@ -1807,6 +1807,119 @@ html.dark .pm-menu {
   transform-origin: bottom left;
 }
 
+/* Phone header account entry: a 44px target around the 28px photo. */
+.pm-mobile-trigger {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  margin-right: -8px;
+  place-items: center;
+  border-radius: 999px;
+  transition: opacity var(--motion-fast) var(--ease-out), transform var(--motion-fast) var(--ease-out);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.pm-mobile-trigger:active {
+  opacity: 0.7;
+  transform: scale(0.96);
+}
+
+.pm-mobile-trigger:focus-visible {
+  outline: none;
+}
+
+.pm-mobile-trigger:focus-visible .runex-avatar {
+  box-shadow: 0 0 0 2px var(--background, #fff), 0 0 0 4px rgba(29, 29, 31, 0.3);
+}
+
+/* Phone account sheet: same menu, docked to the bottom with 44px rows. */
+.pm-sheet-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 75;
+  background: rgba(0, 0, 0, 0.32);
+  -webkit-tap-highlight-color: transparent;
+}
+
+html.dark .pm-sheet-scrim {
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.pm-menu.is-sheet {
+  position: fixed;
+  inset: auto 0 0;
+  z-index: 76;
+  width: auto;
+  max-height: calc(100dvh - max(24px, env(safe-area-inset-top)));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 6px max(8px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
+  border-radius: 16px 16px 0 0;
+  outline: none;
+}
+
+.pm-sheet-handle {
+  display: block;
+  width: 36px;
+  height: 4px;
+  margin: 2px auto 8px;
+  border-radius: 999px;
+  background: var(--pm-line);
+}
+
+.pm-menu.is-sheet .pm-head {
+  gap: 12px;
+  padding: 6px 12px 12px;
+}
+
+.pm-menu.is-sheet .pm-name {
+  font-size: 15px;
+}
+
+.pm-menu.is-sheet .pm-email {
+  font-size: 13px;
+}
+
+.pm-plan {
+  margin-top: 4px;
+}
+
+.pm-menu.is-sheet .pm-sep {
+  margin: 4px 12px;
+}
+
+.pm-menu.is-sheet .pm-item {
+  height: 44px;
+  gap: 12px;
+  padding: 0 12px;
+  border-radius: 10px;
+  font-size: 15px;
+}
+
+.pm-menu.is-sheet .pm-item:active {
+  background: var(--pm-press);
+}
+
+.pm-menu.is-sheet .pm-theme {
+  height: 56px;
+  padding: 0 8px 0 12px;
+  font-size: 15px;
+}
+
+.pm-menu.is-sheet .runex-seg.is-sm > button {
+  height: 40px;
+  min-width: 48px;
+}
+
+/* From md up the sidebar pill is always on screen; the phone entry and sheet step aside. */
+@media (min-width: 768px) {
+  .pm-mobile-trigger,
+  .pm-sheet-scrim,
+  .pm-menu.is-sheet {
+    display: none;
+  }
+}
+
 .pm-head {
   display: flex;
   align-items: center;

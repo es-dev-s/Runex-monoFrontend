@@ -16,6 +16,7 @@ import { ChromeProvider, usePresentedChrome } from "./chrome";
 import { ActivityTimeline } from "./activity-timeline";
 import { ServiceList } from "./email-list";
 import { NotificationBell } from "./notification-bell";
+import { MobileAccountButton } from "./profile-menu";
 import { PlatformPage } from "./platform-pages";
 import { ProjectWorkspace } from "@/components/projects/project-workspace";
 import { DashboardShell, useDashboardDrawer } from "./dashboard-drawer";
@@ -195,7 +196,12 @@ function Shell() {
               onBack={() => setNav(activeNav)}
             />
           </div>
-          {showAccount ? <NotificationBell /> : null}
+          {showAccount ? (
+            <div className="flex shrink-0 items-center gap-1">
+              <NotificationBell />
+              <MobileAccountButton />
+            </div>
+          ) : null}
         </header>
 
         <AnimatePresence>
