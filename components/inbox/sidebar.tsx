@@ -73,7 +73,7 @@ export function Sidebar({
       className={
         sheet
           ? "relative z-20 flex h-full w-full shrink-0 flex-col overflow-y-auto bg-[var(--rail)] px-2 py-3 shadow-[inset_-1px_0_0_var(--line)]"
-          : `relative z-20 hidden shrink-0 flex-col bg-[var(--rail)] px-2 py-3 shadow-[inset_-1px_0_0_var(--line)] transition-[width] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] md:flex ${
+          : `relative z-20 hidden shrink-0 flex-col bg-[var(--rail)] px-2 py-3 shadow-[inset_-1px_0_0_var(--line)] md:flex ${
               collapsed ? "w-12" : "w-[216px]"
             }`
       }
@@ -93,7 +93,7 @@ export function Sidebar({
             go("projects");
             setDeployOpen(true);
           }}
-          className={`group relative mt-1.5 flex h-8 items-center rounded-lg bg-[#1d1d1f] text-[13px] font-normal tracking-[-0.006em] text-white transition-colors duration-150 ease-out hover:bg-black ${
+          className={`group relative mt-1.5 flex h-8 items-center rounded-lg bg-[#1d1d1f] text-[13px] font-normal tracking-[-0.006em] text-white transition-colors duration-[var(--motion-fast)] ease-out hover:bg-black ${
             collapsed ? "w-8" : "w-full"
           }`}
         >
@@ -188,7 +188,7 @@ function RailButton({
       aria-current={active ? "page" : undefined}
       aria-label={collapsed ? label : undefined}
       onClick={onClick}
-      className={`group relative flex h-8 w-full min-w-0 items-center rounded-lg text-left text-[13px] font-normal tracking-[-0.006em] transition-colors duration-150 ease-out ${
+      className={`group relative flex h-8 w-full min-w-0 items-center rounded-lg text-left text-[13px] font-normal tracking-[-0.006em] transition-colors duration-[var(--motion-fast)] ease-out ${
         active
           ? "bg-black/[0.05] text-[#1d1d1f]"
           : "text-[#6e6e73] hover:bg-black/[0.04] hover:text-[#3a3a3c]"
@@ -213,7 +213,7 @@ function RailTip({ label, show }: { label: string; show: boolean }) {
   if (!show) return null;
   return (
     <span aria-hidden className="pointer-events-none absolute top-1/2 left-full z-30 -translate-y-1/2 pl-2">
-      <span className="block h-6 rounded-full border border-black/[0.06] bg-white px-2 text-[12px] leading-6 font-normal tracking-[-0.006em] whitespace-nowrap text-[#3a3a3c] opacity-0 shadow-[0_4px_14px_rgba(0,0,0,0.08)] transition-opacity duration-150 group-hover:opacity-100 group-hover:delay-75 group-focus-visible:opacity-100">
+      <span className="block h-6 rounded-full border border-black/[0.06] bg-white px-2 text-[12px] leading-6 font-normal tracking-[-0.006em] whitespace-nowrap text-[#3a3a3c] opacity-0 shadow-[0_4px_14px_rgba(0,0,0,0.08)] transition-opacity duration-[var(--motion-fast)] group-hover:opacity-100 group-hover:delay-75 group-focus-visible:opacity-100">
         {label}
       </span>
     </span>

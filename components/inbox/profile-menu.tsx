@@ -11,6 +11,7 @@ import { useRouter } from "next/navigation";
 import { AnimatePresence } from "motion/react";
 import * as m from "motion/react-m";
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { DURATION, EASE_OUT } from "@/lib/motion";
 
 export function ProfileMenu() {
   const logout = usePlatformStore((state) => state.logout);
@@ -81,8 +82,8 @@ export function ProfileMenu() {
             aria-label="Account"
             initial={{ opacity: 0, y: 4, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 4, scale: 0.98, transition: { duration: 0.12, ease: "easeOut" } }}
-            transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
+            exit={{ opacity: 0, y: 4, scale: 0.98, transition: { duration: DURATION.fast, ease: EASE_OUT } }}
+            transition={{ duration: DURATION.base, ease: EASE_OUT }}
             className={`pm-menu ${collapsed ? "is-side" : "is-up"}`}
           >
             <div className="pm-head">

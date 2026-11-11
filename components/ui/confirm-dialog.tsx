@@ -86,7 +86,7 @@ export function ConfirmDialog({
             type="button"
             disabled={pending}
             onClick={onClose}
-            className="inline-flex h-8 cursor-pointer items-center rounded-lg px-3 text-[13px] tracking-tight text-fg/55 transition-colors duration-150 ease-out hover:bg-fg/[0.06] hover:text-fg disabled:opacity-50"
+            className="inline-flex h-8 cursor-pointer items-center rounded-lg px-3 text-[13px] tracking-tight text-fg/55 transition-colors duration-[var(--motion-fast)] ease-out hover:bg-fg/[0.06] hover:text-fg disabled:opacity-50"
           >
             {cancelLabel}
           </button>
@@ -96,7 +96,7 @@ export function ConfirmDialog({
             disabled={pending}
             onClick={onConfirm}
             className={cn(
-              "inline-flex h-8 min-w-[5.5rem] items-center justify-center gap-1.5 rounded-lg px-3 text-[13px] font-medium tracking-tight transition-colors duration-150 ease-out",
+              "inline-flex h-8 min-w-[5.5rem] items-center justify-center gap-1.5 rounded-lg px-3 text-[13px] font-medium tracking-tight transition-colors duration-[var(--motion-fast)] ease-out",
               tone === "danger"
                 ? "bg-rose-500/90 text-fg hover:bg-rose-500"
                 : "bg-btn text-btn-fg hover:bg-brand-hover",

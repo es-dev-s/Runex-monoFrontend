@@ -119,9 +119,9 @@ export function MenuSelect({
         className={cn(
           "flex items-center text-left text-[13px] tracking-tight text-fg outline-none",
           bare
-            ? "h-7 w-auto max-w-full gap-1 rounded-md px-0 transition-colors duration-150 ease-out hover:text-fg"
+            ? "h-7 w-auto max-w-full gap-1 rounded-md px-0 transition-colors duration-[var(--motion-fast)] ease-out hover:text-fg"
             : cn(
-                "w-full gap-2 rounded-lg bg-fg/[0.04] px-2.5 ring-1 ring-fg/[0.08] transition-[box-shadow,background-color] duration-150 ease-out",
+                "w-full gap-2 rounded-lg bg-fg/[0.04] px-2.5 ring-1 ring-fg/[0.08] transition-colors duration-[var(--motion-fast)] ease-out",
                 compact ? "h-8" : "h-9",
                 "hover:bg-fg/[0.06] focus-visible:ring-fg/20",
                 open && "bg-fg/[0.06] ring-fg/20",
@@ -143,7 +143,7 @@ export function MenuSelect({
         <ChevronDown
           size={13}
           strokeWidth={1.75}
-          className={cn("shrink-0 text-fg/35 transition-transform duration-150", open && "rotate-180")}
+          className={cn("shrink-0 text-fg/35 transition-transform duration-[var(--motion-fast)]", open && "rotate-180")}
         />
       </button>
       {open && box && typeof document !== "undefined"
@@ -180,7 +180,7 @@ export function MenuSelect({
                         buttonRef.current?.focus();
                       }}
                       className={cn(
-                        "relative isolate flex w-full cursor-pointer items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-[13px] tracking-tight transition-colors duration-100 ease-out",
+                        "relative isolate flex w-full cursor-pointer items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-[13px] tracking-tight transition-colors duration-[var(--motion-fast)] ease-out",
                         active
                           ? "bg-fg/[0.08] text-fg"
                           : "text-fg/75 hover:bg-fg/[0.06] hover:text-fg",

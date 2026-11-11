@@ -268,7 +268,7 @@ function ServiceBars({ rows, pending, onOpen }: { rows: Consumer[]; pending: boo
                   className="flex h-full min-w-0 flex-1 items-end"
                 >
                   <span
-                    className="block w-full rounded-t-[5px] transition-colors duration-150"
+                    className="block w-full rounded-t-[5px] transition-colors duration-[var(--motion-fast)]"
                     style={{
                       height: `${Math.max(ratio * 100, row.node.ramUsedBytes > 0 ? 1.5 : 0)}%`,
                       background: on ? BURN : QUIET,

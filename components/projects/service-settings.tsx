@@ -85,7 +85,7 @@ export function ServiceSettings({
           <button
             type="button"
             onClick={() => onDeploySource(node.sourceType === "github" ? "github" : "upload")}
-            className="inline-flex h-8 w-fit cursor-pointer items-center gap-1.5 rounded-md bg-fg/[0.06] px-2.5 text-[12px] font-medium tracking-tight text-fg/80 ring-1 ring-fg/[0.08] transition-colors duration-150 ease-out hover:bg-fg/[0.1] hover:text-fg"
+            className="inline-flex h-8 w-fit cursor-pointer items-center gap-1.5 rounded-md bg-fg/[0.06] px-2.5 text-[12px] font-medium tracking-tight text-fg/80 ring-1 ring-fg/[0.08] transition-colors duration-[var(--motion-fast)] ease-out hover:bg-fg/[0.1] hover:text-fg"
           >
             <ExternalLink size={12} strokeWidth={1.9} />
             Change source
@@ -274,7 +274,7 @@ export function ServiceSettings({
             })
           }
           className={cn(
-            "mt-2 inline-flex h-8 items-center gap-1.5 rounded-md px-2.5 text-[12px] font-medium tracking-tight text-rose-700 transition-colors duration-150 ease-out hover:bg-rose-500/10 hover:text-rose-800",
+            "mt-2 inline-flex h-8 items-center gap-1.5 rounded-md px-2.5 text-[12px] font-medium tracking-tight text-rose-700 transition-colors duration-[var(--motion-fast)] ease-out hover:bg-rose-500/10 hover:text-rose-800",
             pending.remove ? "cursor-progress opacity-60" : "cursor-pointer",
           )}
         >
@@ -327,7 +327,7 @@ function Action({
       onClick={onClick}
       disabled={busy}
       className={cn(
-        "inline-flex h-8 items-center gap-1.5 rounded-md px-2.5 text-[12px] font-medium tracking-tight transition-colors duration-150 ease-out",
+        "inline-flex h-8 items-center gap-1.5 rounded-md px-2.5 text-[12px] font-medium tracking-tight transition-colors duration-[var(--motion-fast)] ease-out",
         primary
           ? "bg-btn text-btn-fg hover:bg-brand-hover"
           : "bg-fg/[0.06] text-fg/75 ring-1 ring-fg/[0.08] hover:bg-fg/[0.1] hover:text-fg",

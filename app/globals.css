@@ -91,6 +91,20 @@ html.dark {
   --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
+/* Motion system: three durations, one ease-out curve. Tailwind's ease-out and
+   bare transition-* utilities resolve to the same values. */
+@theme {
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --default-transition-duration: 120ms;
+  --default-transition-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+:root {
+  --motion-fast: 120ms;
+  --motion-base: 180ms;
+  --motion-slow: 240ms;
+}
+
 @utility scrollbar-none {
   scrollbar-width: none;
   &::-webkit-scrollbar {
@@ -125,8 +139,16 @@ html.dark img.runex-logo {
   }
 }
 
+/* Side panels slide in on mount (composited); the layout change itself is instant. */
+.runex-slide-in {
+  animation: runex-inspector-in var(--motion-base) var(--ease-out) backwards;
+}
+
+.harbor-inspector.is-enter {
+  animation: runex-inspector-in var(--motion-base) var(--ease-out) backwards;
+}
+
 .harbor-inspector {
-  animation: runex-inspector-in 200ms cubic-bezier(0.22, 1, 0.36, 1) both;
   box-shadow: -1px 0 0 rgba(0, 0, 0, 0.05), -18px 0 40px rgba(0, 0, 0, 0.04);
   background: var(--card);
 }
@@ -139,14 +161,15 @@ html.dark img.runex-logo {
   }
 }
 
+/* Slides clear of the inspector with a composited transform, not by animating right. */
 .harbor-zoom-dock {
   right: 12px;
-  transition: right 200ms cubic-bezier(0.22, 1, 0.36, 1);
+  transition: transform var(--motion-base) var(--ease-out);
 }
 
 @media (min-width: 768px) {
   .harbor-zoom-dock {
-    right: calc(12px + var(--harbor-inspector-inset, 0px));
+    transform: translate3d(calc(-1 * var(--harbor-inspector-inset, 0px)), 0, 0);
   }
 }
 
@@ -210,24 +233,23 @@ html.runex-col-resize * {
   scroll-behavior: smooth;
 }
 
-.runex-canvas {
-  animation: runex-in 180ms ease;
+/* Page entrance on navigation. Never on a reload's first paint (see lib/motion). */
+.runex-enter {
+  animation: runex-enter var(--motion-slow) var(--ease-out) backwards;
 }
 
-@keyframes runex-in {
+@keyframes runex-enter {
   from {
     opacity: 0;
-  }
-  to {
-    opacity: 1;
+    transform: translate3d(0, 4px, 0);
   }
 }
 
-/* First frame keeps the saved shell still. Motion starts only after that paint. */
+/* First frame keeps the saved shell still: no transitions while it settles.
+   Entrance animations are gated in React instead, so nothing restarts here. */
 [data-motion="off"],
 [data-motion="off"] * {
   transition: none !important;
-  animation: none !important;
 }
 
 html.dark .harbor-inspector {
@@ -464,7 +486,7 @@ html.dark .ring-white {
   flex: none;
   border-radius: 999px;
   background: rgba(0, 0, 0, 0.14);
-  transition: background-color 180ms ease;
+  transition: background-color var(--motion-base) var(--ease-out);
 }
 
 .runex-switch > span {
@@ -476,7 +498,7 @@ html.dark .ring-white {
   border-radius: 999px;
   background: #fff;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-  transition: transform 180ms cubic-bezier(0.22, 1, 0.36, 1);
+  transition: transform var(--motion-base) var(--ease-out);
 }
 
 .runex-switch.is-on {
@@ -527,7 +549,6 @@ html.dark .runex-switch.is-on > span {
   --auth-btn: #1d1d1f;
   --auth-btn-hover: #2c2c2e;
   --auth-btn-fg: #ffffff;
-  --auth-ease: cubic-bezier(0.22, 1, 0.36, 1);
   background: var(--auth-bg);
   color: var(--auth-ink);
   -webkit-font-smoothing: antialiased;
@@ -574,31 +595,13 @@ html.dark .auth-stage {
   width: 100%;
   max-width: 360px;
   flex-direction: column;
-  margin: auto 0;
-  padding: 48px 0 32px;
+  /* Anchored near the top, so opening the email form never moves the title. */
+  margin: 0 0 auto;
+  padding: clamp(48px, 16vh, 160px) 0 32px;
 }
 
-.auth-card > * {
-  animation: auth-in 420ms var(--auth-ease) both;
-}
-
-.auth-card > :nth-child(2) {
-  animation-delay: 40ms;
-}
-
-.auth-card > :nth-child(3) {
-  animation-delay: 80ms;
-}
-
-.auth-card > :nth-child(n + 4) {
-  animation-delay: 120ms;
-}
-
-@keyframes auth-in {
-  from {
-    opacity: 0;
-    transform: translateY(6px);
-  }
+.auth-card {
+  animation: runex-enter var(--motion-slow) var(--ease-out) backwards;
 }
 
 .auth-logo {
@@ -641,12 +644,11 @@ html.dark .auth-stage {
   font-weight: 500;
   letter-spacing: -0.011em;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.06);
-  transition: background-color 180ms ease-out, box-shadow 180ms ease-out, transform 180ms ease-out, opacity 180ms ease-out;
+  transition: background-color var(--motion-fast) var(--ease-out), transform var(--motion-fast) var(--ease-out), opacity var(--motion-fast) var(--ease-out);
 }
 
 .auth-google:hover {
   background: var(--auth-btn-hover);
-  box-shadow: 0 6px 18px -8px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
 .auth-google:active {
@@ -689,7 +691,7 @@ html.dark .auth-google-mark {
   font-size: 13.5px;
   letter-spacing: -0.008em;
   color: var(--auth-muted);
-  transition: color 160ms ease-out, background-color 160ms ease-out;
+  transition: color var(--motion-fast) var(--ease-out), background-color var(--motion-fast) var(--ease-out);
 }
 
 .auth-toggle:hover {
@@ -703,7 +705,7 @@ html.dark .auth-google-mark {
 }
 
 .auth-toggle-icon {
-  transition: transform 240ms var(--auth-ease);
+  transition: transform var(--motion-base) var(--ease-out);
 }
 
 .auth-toggle[aria-expanded="true"] .auth-toggle-icon {
@@ -711,23 +713,19 @@ html.dark .auth-google-mark {
 }
 
 .auth-collapse {
-  display: grid;
-  grid-template-rows: 0fr;
-  opacity: 0;
-  transition: grid-template-rows 320ms var(--auth-ease), opacity 220ms ease-out;
+  display: none;
 }
 
 .auth-collapse[data-open] {
-  grid-template-rows: 1fr;
-  opacity: 1;
+  display: block;
+  animation: auth-reveal var(--motion-base) var(--ease-out) backwards;
 }
 
-.auth-collapse-inner {
-  min-height: 0;
-  overflow: hidden;
-  /* Room for focus rings inside the clip. */
-  margin: 0 -4px;
-  padding: 0 4px;
+@keyframes auth-reveal {
+  from {
+    opacity: 0;
+    transform: translate3d(0, -4px, 0);
+  }
 }
 
 .auth-form {
@@ -758,7 +756,7 @@ html.dark .auth-google-mark {
   font-weight: 400;
   letter-spacing: -0.011em;
   outline: none;
-  transition: border-color 160ms ease-out, box-shadow 160ms ease-out;
+  transition: border-color var(--motion-fast) var(--ease-out);
 }
 
 .auth-field:hover {
@@ -793,7 +791,7 @@ html.dark .auth-google-mark {
   border-radius: 8px;
   color: var(--auth-faint);
   transform: translateY(-50%);
-  transition: color 160ms ease-out, background-color 160ms ease-out;
+  transition: color var(--motion-fast) var(--ease-out), background-color var(--motion-fast) var(--ease-out);
 }
 
 .auth-eye:hover {
@@ -826,7 +824,7 @@ html.dark .auth-google-mark {
   font-size: 14.5px;
   font-weight: 500;
   letter-spacing: -0.011em;
-  transition: background-color 160ms ease-out, border-color 160ms ease-out, opacity 160ms ease-out, transform 160ms ease-out;
+  transition: background-color var(--motion-fast) var(--ease-out), border-color var(--motion-fast) var(--ease-out), opacity var(--motion-fast) var(--ease-out), transform var(--motion-fast) var(--ease-out);
 }
 
 .auth-submit:hover:not(:disabled) {
@@ -894,7 +892,7 @@ html.dark .auth-error-text {
   text-decoration: underline;
   text-decoration-color: transparent;
   text-underline-offset: 3px;
-  transition: text-decoration-color 160ms ease-out;
+  transition: text-decoration-color var(--motion-fast) var(--ease-out);
 }
 
 .auth-link:hover {
@@ -917,7 +915,7 @@ html.dark .auth-error-text {
 .auth-foot a {
   border-radius: 4px;
   color: var(--auth-muted);
-  transition: color 160ms ease-out;
+  transition: color var(--motion-fast) var(--ease-out);
 }
 
 .auth-foot a:hover {
@@ -935,13 +933,9 @@ html.dark .auth-error-text {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .auth-card > * {
+  .auth-card,
+  .auth-collapse[data-open] {
     animation: none;
-  }
-
-  .auth-collapse,
-  .auth-toggle-icon {
-    transition: none;
   }
 }
 
@@ -970,7 +964,7 @@ html.runex-theme-switching *::after {
   line-height: 1;
   user-select: none;
   isolation: isolate;
-  transition: box-shadow 180ms ease;
+
 }
 
 .runex-avatar img {
@@ -1021,7 +1015,7 @@ html.dark .runex-avatar::after {
   color: #6e6e73;
   font-size: 13px;
   letter-spacing: -0.006em;
-  transition: background-color 160ms ease-out, color 160ms ease-out, box-shadow 160ms ease-out;
+  transition: background-color var(--motion-fast) var(--ease-out), color var(--motion-fast) var(--ease-out);
 }
 
 .runex-seg > button:hover {
@@ -1103,7 +1097,6 @@ html.dark .runex-seg > button:focus-visible {
   --st-bar: #efefef;
   --st-bar-fill: #1d1d1f;
   --st-ring: rgba(29, 29, 31, 0.22);
-  --st-ease: cubic-bezier(0.22, 1, 0.36, 1);
   display: flex;
   width: 100%;
   max-width: 760px;
@@ -1127,34 +1120,6 @@ html.dark .st-page {
   --st-bar: rgba(255, 255, 255, 0.08);
   --st-bar-fill: #f2f2f2;
   --st-ring: rgba(255, 255, 255, 0.3);
-}
-
-/* Sections settle in one after another, briefly. */
-.st-page > * {
-  animation: st-in 260ms var(--st-ease) both;
-}
-
-.st-page > :nth-child(2) {
-  animation-delay: 30ms;
-}
-
-.st-page > :nth-child(3) {
-  animation-delay: 60ms;
-}
-
-.st-page > :nth-child(4) {
-  animation-delay: 90ms;
-}
-
-.st-page > :nth-child(n + 5) {
-  animation-delay: 120ms;
-}
-
-@keyframes st-in {
-  from {
-    opacity: 0;
-    transform: translateY(4px);
-  }
 }
 
 .st-truncate {
@@ -1309,7 +1274,7 @@ html.dark .st-page {
   min-height: 52px;
   margin: 0 18px;
   padding: 12px 0;
-  transition: background-color 160ms ease-out;
+  transition: background-color var(--motion-fast) var(--ease-out);
 }
 
 .st-row-label {
@@ -1393,7 +1358,7 @@ html.dark .st-page {
   text-decoration: underline;
   text-decoration-color: transparent;
   text-underline-offset: 3px;
-  transition: color 160ms ease-out, text-decoration-color 160ms ease-out;
+  transition: color var(--motion-fast) var(--ease-out), text-decoration-color var(--motion-fast) var(--ease-out);
 }
 
 .st-link:hover {
@@ -1418,7 +1383,7 @@ html.dark .st-page {
   letter-spacing: -0.008em;
   color: var(--st-ink);
   white-space: nowrap;
-  transition: background-color 160ms ease-out, border-color 160ms ease-out, transform 160ms ease-out;
+  transition: background-color var(--motion-fast) var(--ease-out), border-color var(--motion-fast) var(--ease-out), transform var(--motion-fast) var(--ease-out);
 }
 
 .st-btn:hover {
@@ -1552,7 +1517,6 @@ html.dark .st-page {
   height: 100%;
   border-radius: inherit;
   background: var(--st-bar-fill);
-  transition: width 400ms var(--st-ease);
 }
 
 .st-bar > span[data-high] {
@@ -1749,7 +1713,7 @@ html.dark .pm-menu {
   border-radius: 8px;
   color: var(--pm-ink);
   text-align: left;
-  transition: background-color 150ms ease-out, box-shadow 150ms ease-out;
+  transition: background-color var(--motion-fast) var(--ease-out);
 }
 
 .pm-trigger:hover {
@@ -1788,7 +1752,7 @@ html.dark .pm-menu {
 .pm-trigger-icon {
   flex: none;
   color: var(--pm-faint);
-  transition: color 150ms ease-out;
+  transition: color var(--motion-fast) var(--ease-out);
 }
 
 .pm-trigger:hover .pm-trigger-icon,
@@ -1889,7 +1853,7 @@ html.dark .pm-menu {
   letter-spacing: -0.008em;
   color: var(--pm-ink);
   text-align: left;
-  transition: background-color 150ms ease-out, color 150ms ease-out;
+  transition: background-color var(--motion-fast) var(--ease-out), color var(--motion-fast) var(--ease-out);
 }
 
 .pm-item:hover,
@@ -2025,9 +1989,7 @@ html.dark .plan-label.is-ended {
   padding: 16px;
   overflow-y: auto;
   overscroll-behavior: contain;
-  background: rgba(0, 0, 0, 0.22);
-  -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
+  background: rgba(0, 0, 0, 0.32);
 }
 
 html.dark .gate-overlay {
@@ -2039,7 +2001,7 @@ html.dark .gate-overlay {
   --gate-row: rgba(255, 255, 255, 0.06);
   --gate-fill: #222222;
   --gate-ring: rgba(255, 255, 255, 0.3);
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(0, 0, 0, 0.64);
 }
 
 .gate-card {
@@ -2135,7 +2097,7 @@ html.dark .gate-card {
   font-size: 14px;
   font-weight: 500;
   letter-spacing: -0.011em;
-  transition: background-color 160ms ease-out, color 160ms ease-out, box-shadow 160ms ease-out, transform 160ms ease-out;
+  transition: background-color var(--motion-fast) var(--ease-out), color var(--motion-fast) var(--ease-out), transform var(--motion-fast) var(--ease-out);
 }
 
 .gate-btn:active {
@@ -2189,8 +2151,3 @@ html.dark .gate-card {
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .st-page > * {
-    animation: none;
-  }
-}

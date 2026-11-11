@@ -81,7 +81,7 @@ export function CanvasContextMenu({
       style={{ top: box.top, left: box.left, width: MENU_W }}
       className={cn(
         chromePanel,
-        "fixed z-[90] p-1.5 transition-[opacity,transform] duration-150 ease-[cubic-bezier(0.16,1,0.3,1)]",
+        "fixed z-[90] p-1.5 transition-[opacity,transform] duration-[var(--motion-fast)] ease-out",
         visible ? "scale-100 opacity-100" : "scale-[0.97] opacity-0",
       )}
       onPointerDown={(event) => event.stopPropagation()}
@@ -153,7 +153,7 @@ function MenuRow({
         if (!disabled) onSelect();
       }}
       className={cn(
-        "flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-2 py-1.5 text-left transition-colors duration-150 ease-out",
+        "flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-2 py-1.5 text-left transition-colors duration-[var(--motion-fast)] ease-out",
         disabled ? "cursor-progress opacity-55" : "hover:bg-fg/[0.06]",
       )}
     >

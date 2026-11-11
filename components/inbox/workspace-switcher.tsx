@@ -8,6 +8,7 @@ import { AnimatePresence } from "motion/react";
 import * as m from "motion/react-m";
 import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { DURATION, EASE_OUT } from "@/lib/motion";
 
 export function WorkspaceSwitcher({ collapsed, sheet = false }: { collapsed: boolean; sheet?: boolean }) {
   const user = usePlatformStore((state) => state.user);
@@ -158,7 +159,7 @@ export function WorkspaceSwitcher({ collapsed, sheet = false }: { collapsed: boo
             setNameError("");
             setCreating(true);
           }}
-          className={`flex w-full items-center gap-1.5 rounded-lg border border-black/[0.08] px-2.5 font-medium tracking-[-0.011em] text-[#1d1d1f] transition-colors duration-150 ease-out hover:bg-black/[0.03] ${
+          className={`flex w-full items-center gap-1.5 rounded-lg border border-black/[0.08] px-2.5 font-medium tracking-[-0.011em] text-[#1d1d1f] transition-colors duration-[var(--motion-fast)] ease-out hover:bg-black/[0.03] ${
             sheet ? "h-10 text-[13px]" : "h-8 text-[12px]"
           }`}
         >
@@ -183,7 +184,7 @@ export function WorkspaceSwitcher({ collapsed, sheet = false }: { collapsed: boo
                 aria-selected={selected}
                 onMouseDown={(event) => event.preventDefault()}
                 onClick={() => choose(item.id)}
-                className={`flex w-full items-center gap-2 rounded-lg px-2 text-left text-[13px] tracking-[-0.011em] transition-colors duration-150 ease-out ${
+                className={`flex w-full items-center gap-2 rounded-lg px-2 text-left text-[13px] tracking-[-0.011em] transition-colors duration-[var(--motion-fast)] ease-out ${
                   sheet ? "h-10" : "h-8"
                 } ${selected ? "bg-black/[0.04] text-[#1d1d1f]" : "text-[#3a3a3c] hover:bg-black/[0.03]"}`}
               >
@@ -210,7 +211,7 @@ export function WorkspaceSwitcher({ collapsed, sheet = false }: { collapsed: boo
         aria-label={collapsed ? (ready ? active.name : "Workspace") : undefined}
         aria-busy={!ready}
         onClick={() => setOpen((current) => !current)}
-        className={`group relative flex h-8 min-w-0 items-center rounded-lg text-left text-[13px] tracking-[-0.011em] text-[#1d1d1f] transition-colors duration-150 ease-out ${
+        className={`group relative flex h-8 min-w-0 items-center rounded-lg text-left text-[13px] tracking-[-0.011em] text-[#1d1d1f] transition-colors duration-[var(--motion-fast)] ease-out ${
           collapsed ? "w-8" : "w-full"
         } ${open ? "bg-black/[0.05]" : "hover:bg-black/[0.04]"}`}
       >
@@ -232,7 +233,7 @@ export function WorkspaceSwitcher({ collapsed, sheet = false }: { collapsed: boo
         )}
         {collapsed && !open ? (
           <span aria-hidden className="pointer-events-none absolute top-1/2 left-full z-30 -translate-y-1/2 pl-2">
-            <span className="block h-6 rounded-full border border-black/[0.06] bg-white px-2 text-[12px] leading-6 font-normal tracking-[-0.006em] whitespace-nowrap text-[#3a3a3c] opacity-0 shadow-[0_4px_14px_rgba(0,0,0,0.08)] transition-opacity duration-150 group-hover:opacity-100 group-hover:delay-75 group-focus-visible:opacity-100">
+            <span className="block h-6 rounded-full border border-black/[0.06] bg-white px-2 text-[12px] leading-6 font-normal tracking-[-0.006em] whitespace-nowrap text-[#3a3a3c] opacity-0 shadow-[0_4px_14px_rgba(0,0,0,0.08)] transition-opacity duration-[var(--motion-fast)] group-hover:opacity-100 group-hover:delay-75 group-focus-visible:opacity-100">
               {ready ? active.name : "Workspace"}
             </span>
           </span>
@@ -249,7 +250,7 @@ export function WorkspaceSwitcher({ collapsed, sheet = false }: { collapsed: boo
               initial={{ opacity: 0, y: -6 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -6 }}
-              transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
+              transition={{ duration: DURATION.base, ease: EASE_OUT }}
               className="mt-1.5 w-full rounded-[14px] border border-[#ececec] bg-white p-1.5"
             >
               {menu}
@@ -267,7 +268,7 @@ export function WorkspaceSwitcher({ collapsed, sheet = false }: { collapsed: boo
                 initial={{ opacity: 0 }}
                 animate={{ opacity: place ? 1 : 0 }}
                 exit={{ opacity: 0 }}
-                transition={{ duration: 0.16, ease: [0.22, 1, 0.36, 1] }}
+                transition={{ duration: DURATION.fast, ease: EASE_OUT }}
                 style={{ top: place?.top ?? 0, left: place?.left ?? -9999 }}
                 className="fixed z-50 w-[232px] rounded-[14px] border border-[#ececec] bg-white p-1.5 shadow-[0_18px_40px_-24px_rgba(0,0,0,0.35),0_0_0_1px_rgba(0,0,0,0.02)]"
               >

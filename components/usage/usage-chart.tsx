@@ -361,7 +361,7 @@ export function UsageMeter({
       aria-valuemax={100}
     >
       <div
-        className="h-full rounded-full transition-[width] duration-500 ease-out"
+        className="h-full rounded-full transition-[width] duration-[var(--motion-slow)] ease-out"
         style={{
           width: `${width}%`,
           backgroundColor: fill,

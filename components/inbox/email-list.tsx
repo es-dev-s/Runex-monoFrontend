@@ -126,7 +126,7 @@ export function ServiceList({
             ))}
           </div>
         ) : (
-          <div className="runex-canvas flex flex-1 flex-col items-center justify-center px-6 py-16 text-center">
+          <div className="flex flex-1 flex-col items-center justify-center px-6 py-16 text-center">
             <span className="grid size-11 place-items-center rounded-[12px] bg-[#f5f5f7] text-[#6e6e73]" aria-hidden>
               <Folder size={18} strokeWidth={1.5} absoluteStrokeWidth />
             </span>
@@ -142,7 +142,7 @@ export function ServiceList({
               <button
                 type="button"
                 onClick={() => setDeployOpen(true)}
-                className="mt-5 inline-flex h-8 items-center gap-1.5 rounded-lg bg-[#1d1d1f] pr-3.5 pl-3 text-[13px] font-medium tracking-[-0.006em] text-white transition-[background-color,transform] duration-150 ease-out hover:bg-black active:scale-[0.98]"
+                className="mt-5 inline-flex h-8 items-center gap-1.5 rounded-lg bg-[#1d1d1f] pr-3.5 pl-3 text-[13px] font-medium tracking-[-0.006em] text-white transition-[background-color,transform] duration-[var(--motion-fast)] ease-out hover:bg-black active:scale-[0.98]"
               >
                 <Plus size={15} strokeWidth={1.5} absoluteStrokeWidth aria-hidden />
                 New project

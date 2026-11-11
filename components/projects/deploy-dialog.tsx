@@ -191,7 +191,7 @@ export function DeployDialog({
             type="button"
             onClick={onClose}
             disabled={pending}
-            className="inline-flex h-9 cursor-pointer items-center rounded-lg px-3 text-[13px] tracking-tight text-fg/60 transition-colors duration-150 ease-out hover:bg-fg/[0.06] hover:text-fg disabled:opacity-50"
+            className="inline-flex h-9 cursor-pointer items-center rounded-lg px-3 text-[13px] tracking-tight text-fg/60 transition-colors duration-[var(--motion-fast)] ease-out hover:bg-fg/[0.06] hover:text-fg disabled:opacity-50"
           >
             Close
           </button>
@@ -201,7 +201,7 @@ export function DeployDialog({
               onClick={() => void githubDeploy.current?.()}
               disabled={pending || !githubCanDeploy}
               className={cn(
-                "inline-flex h-9 min-w-[10.5rem] items-center justify-center gap-1.5 rounded-lg bg-btn px-3.5 text-[13px] font-medium tracking-tight text-btn-fg transition-colors duration-150 ease-out hover:bg-brand-hover",
+                "inline-flex h-9 min-w-[10.5rem] items-center justify-center gap-1.5 rounded-lg bg-btn px-3.5 text-[13px] font-medium tracking-tight text-btn-fg transition-colors duration-[var(--motion-fast)] ease-out hover:bg-brand-hover",
                 pending || !githubCanDeploy ? "cursor-not-allowed opacity-60" : "cursor-pointer",
               )}
             >
@@ -280,7 +280,7 @@ function UploadDropZone({
         onDragLeave={onDragLeave}
         onDrop={onDrop}
         className={cn(
-          "grid min-h-[12rem] w-full flex-1 place-items-center content-center gap-3 rounded-xl border border-dashed px-4 py-8 text-center transition-[border-color,background-color] duration-150 ease-out",
+          "grid min-h-[12rem] w-full flex-1 place-items-center content-center gap-3 rounded-xl border border-dashed px-4 py-8 text-center transition-[border-color,background-color] duration-[var(--motion-fast)] ease-out",
           pending ? "cursor-progress border-fg/12 opacity-70" : "cursor-pointer",
           !pending && over
             ? "border-fg/40 bg-fg/[0.05]"
@@ -372,7 +372,7 @@ function ToggleTab({
       title={label}
       onClick={onClick}
       className={cn(
-        "inline-flex h-7 cursor-pointer items-center gap-1.5 rounded-[5px] px-2 text-[12px] tracking-tight transition-colors duration-150 ease-out",
+        "inline-flex h-7 cursor-pointer items-center gap-1.5 rounded-[5px] px-2 text-[12px] tracking-tight transition-colors duration-[var(--motion-fast)] ease-out",
         active ? "bg-fg/10 text-fg" : "text-fg/45 hover:text-fg/80",
       )}
     >

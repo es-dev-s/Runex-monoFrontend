@@ -186,7 +186,7 @@ export function ActivityTimeline() {
       </section>
 
       <div
-        className="hidden min-h-0 shrink-0 overflow-hidden transition-[width] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] md:block"
+        className="hidden min-h-0 shrink-0 overflow-hidden md:block"
         style={{ width: selected ? PANEL : 0 }}
       >
         {selected && !narrow ? (
@@ -297,7 +297,7 @@ function LogPanel({ row, onClose, fill = false }: { row: ActivityRow; onClose: (
 
   return (
     <aside
-      className={`flex h-full min-h-0 flex-col overflow-hidden bg-white ${
+      className={`runex-slide-in flex h-full min-h-0 flex-col overflow-hidden bg-white ${
         fill ? "w-full" : "w-[504px] shrink-0 rounded-[16px] border border-[#ececec]"
       }`}
     >

@@ -166,7 +166,7 @@ function ManageMenu({
         aria-controls={menuId}
         onClick={() => setOpen((current) => !current)}
         className={cn(
-          "inline-flex h-7 cursor-pointer items-center rounded-md px-2 text-[12px] font-medium leading-none tracking-tight transition-colors duration-150 ease-out",
+          "inline-flex h-7 cursor-pointer items-center rounded-md px-2 text-[12px] font-medium leading-none tracking-tight transition-colors duration-[var(--motion-fast)] ease-out",
           "text-fg/55 hover:bg-fg/[0.06] hover:text-fg",
           open && "bg-fg/[0.06] text-fg",
         )}

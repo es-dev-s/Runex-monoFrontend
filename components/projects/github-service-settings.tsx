@@ -196,14 +196,14 @@ function Toggle({
       disabled={disabled}
       onClick={() => onChange(!checked)}
       className={cn(
-        "inline-flex h-5 w-9 shrink-0 items-center overflow-hidden rounded-full p-[2px] transition-colors duration-150 ease-out",
+        "inline-flex h-5 w-9 shrink-0 items-center overflow-hidden rounded-full p-[2px] transition-colors duration-[var(--motion-fast)] ease-out",
         checked ? "bg-accent" : "bg-fg/15",
         disabled ? "cursor-progress opacity-60" : "cursor-pointer",
       )}
     >
       <span
         aria-hidden="true"
-        className="block size-4 rounded-full bg-fg transition-transform duration-150 ease-out"
+        className="block size-4 rounded-full bg-fg transition-transform duration-[var(--motion-fast)] ease-out"
         style={{ transform: checked ? "translateX(16px)" : "translateX(0px)" }}
       />
     </button>

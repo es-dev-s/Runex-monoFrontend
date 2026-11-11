@@ -5,6 +5,7 @@ import { Bell } from "lucide-react";
 import { AnimatePresence } from "motion/react";
 import * as m from "motion/react-m";
 import { useEffect, useRef, useState } from "react";
+import { DURATION, EASE_OUT } from "@/lib/motion";
 
 export function NotificationBell() {
   const notices = usePlatformStore((state) => state.notices);
@@ -54,7 +55,7 @@ export function NotificationBell() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.16, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: DURATION.base, ease: EASE_OUT }}
             className="absolute top-[calc(100%+8px)] right-0 z-40 w-72 origin-top-right rounded-[14px] border border-[#ececec] bg-white p-1 shadow-[0_16px_40px_rgba(0,0,0,0.08)]"
           >
             <p className="px-2.5 py-2 text-[12px] font-medium text-[#8a8a8a]">Notifications</p>

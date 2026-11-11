@@ -383,7 +383,7 @@ function PostgresBrowser({
                       type="button"
                       onClick={() => choose(table)}
                       className={cn(
-                        "flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 text-left transition-colors duration-150 ease-out",
+                        "flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 text-left transition-colors duration-[var(--motion-fast)] ease-out",
                         active ? "bg-fg/[0.06] text-fg" : "hover:bg-fg/[0.05] text-fg/85",
                       )}
                     >
@@ -629,7 +629,7 @@ function RedisBrowser({
                       onOpen?.();
                     }}
                     className={cn(
-                      "flex w-full cursor-pointer items-center gap-2 rounded-lg px-2.5 py-2 text-left transition-colors duration-150 ease-out",
+                      "flex w-full cursor-pointer items-center gap-2 rounded-lg px-2.5 py-2 text-left transition-colors duration-[var(--motion-fast)] ease-out",
                       selection === item.name ? "bg-fg/[0.06] text-fg" : "hover:bg-fg/[0.05]",
                     )}
                   >

@@ -103,7 +103,7 @@ export function FirstRunSource({
           type="button"
           disabled={!canDeploy || pending || saving}
           onClick={() => void deployRef.current?.()}
-          className="inline-flex h-8 min-w-[6.5rem] cursor-pointer items-center justify-center rounded-md bg-btn px-3 text-[12.5px] font-medium tracking-tight text-btn-fg transition-colors duration-150 ease-out hover:bg-brand-hover disabled:cursor-not-allowed disabled:bg-fg/20 disabled:text-fg/45"
+          className="inline-flex h-8 min-w-[6.5rem] cursor-pointer items-center justify-center rounded-md bg-btn px-3 text-[12.5px] font-medium tracking-tight text-btn-fg transition-colors duration-[var(--motion-fast)] ease-out hover:bg-brand-hover disabled:cursor-not-allowed disabled:bg-fg/20 disabled:text-fg/45"
         >
           {saving ? "Saving" : pending ? <Loader2 size={13} strokeWidth={1.75} className="animate-spin" /> : "Deploy"}
         </button>

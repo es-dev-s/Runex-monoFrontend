@@ -46,13 +46,13 @@ const PRICING = [
 export function PlatformPage({ nav }: { nav: NavId }) {
   if (nav === "usage") {
     return (
-      <div key={nav} className="runex-canvas flex flex-col gap-3">
+      <div key={nav} className="flex flex-col gap-3">
         <WorkspaceUsage />
       </div>
     );
   }
   return (
-    <div key={nav} className="runex-canvas st-page">
+    <div key={nav} className="st-page">
       {nav === "people" ? <PeoplePage /> : null}
       {nav === "general" ? <GeneralPage /> : null}
       {nav === "plans" ? <PlansPage /> : null}

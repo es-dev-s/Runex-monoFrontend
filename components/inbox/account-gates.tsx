@@ -11,6 +11,7 @@ import * as m from "motion/react-m";
 import { useCallback, useEffect, useRef, useState, type ReactNode, type RefObject } from "react";
 import { createPortal } from "react-dom";
 import { RunexLogo } from "./runex-logo";
+import { DURATION, EASE_OUT } from "@/lib/motion";
 
 const WELCOME_KEY = (id: string) => `runex.welcomed.${id}`;
 const IGNORE_KEY = (id: string, ends: string) => `runex.trial-ignored.${id}.${ends}`;
@@ -313,8 +314,8 @@ function FloatingModule({
       className="gate-overlay"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      exit={{ opacity: 0, transition: { duration: 0.16, ease: "easeOut" } }}
-      transition={{ duration: 0.2, ease: "easeOut" }}
+      exit={{ opacity: 0, transition: { duration: DURATION.fast, ease: EASE_OUT } }}
+      transition={{ duration: DURATION.base, ease: EASE_OUT }}
     >
       <m.div
         ref={card}
@@ -323,10 +324,10 @@ function FloatingModule({
         aria-labelledby={labelledBy}
         aria-describedby={describedBy}
         className="gate-card"
-        initial={still ? { opacity: 0 } : { opacity: 0, y: 10, scale: 0.98 }}
+        initial={still ? { opacity: 0 } : { opacity: 0, y: 8, scale: 0.985 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
-        exit={still ? { opacity: 0 } : { opacity: 0, y: 6, scale: 0.985, transition: { duration: 0.16, ease: "easeOut" } }}
-        transition={{ duration: 0.26, ease: [0.22, 1, 0.36, 1] }}
+        exit={still ? { opacity: 0 } : { opacity: 0, y: 4, scale: 0.99, transition: { duration: DURATION.fast, ease: EASE_OUT } }}
+        transition={{ duration: DURATION.slow, ease: EASE_OUT }}
       >
         {children}
       </m.div>
