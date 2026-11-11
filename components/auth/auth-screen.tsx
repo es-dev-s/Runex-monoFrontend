@@ -4,7 +4,7 @@ import { RunexLogo } from "@/components/inbox/runex-logo";
 import { signInSchema, signUpSchema } from "@/lib/auth-schema";
 import { usePlatformStore } from "@/lib/inbox/store";
 import { safeInternalPath } from "@/lib/session";
-import { Eye, EyeOff } from "lucide-react";
+import { ChevronDown, Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useId, useRef, useState, type FocusEvent, type FormEvent } from "react";
@@ -47,6 +47,7 @@ export function AuthScreen({ mode, oauthError }: { mode: "sign-in" | "sign-up"; 
   const scrollerRef = useRef<HTMLDivElement>(null);
   const redirecting = useRef(false);
   const [leaving, setLeaving] = useState(false);
+  const [emailOpen, setEmailOpen] = useState(false);
 
   useEffect(() => {
     const node = frameRef.current;
@@ -147,36 +148,36 @@ export function AuthScreen({ mode, oauthError }: { mode: "sign-in" | "sign-up"; 
     };
   }
 
-  return (
-    <main
-      ref={frameRef}
-      className="auth-light auth-stage fixed inset-x-0 top-0 flex h-dvh min-h-0 [color-scheme:light]"
-    >
-      <div ref={scrollerRef} className="auth-scroll">
-        <div className="auth-layout">
-          <section className="auth-form-col">
-            <div className="auth-brand">
-              <RunexLogo className="h-7 w-7" />
-              <span className="auth-mark">Runex</span>
-            </div>
+  const toggleEmail = () => {
+    const opening = !emailOpen;
+    setEmailOpen(opening);
+    if (opening) {
+      window.requestAnimationFrame(() => {
+        document.getElementById(signingUp ? `${formId}-username` : `${formId}-login`)?.focus({ preventScroll: true });
+      });
+    }
+  };
 
-            <div className="auth-form">
-            <h1 className="auth-title">
-              {signingUp ? (
-                <>
-                  Create your <em>account</em>
-                </>
-              ) : (
-                <>
-                  Welcome <em>back</em>
-                </>
-              )}
+  const errorNote = formError ? (
+    <p className="auth-error" role="alert">
+      {formError}
+    </p>
+  ) : null;
+
+  return (
+    <main ref={frameRef} className="auth-stage fixed inset-x-0 top-0 flex h-dvh min-h-0">
+      <div ref={scrollerRef} className="auth-scroll">
+        <div className="auth-shell">
+          <section className="auth-card" aria-labelledby={`${formId}-title`}>
+            <RunexLogo className="auth-logo" />
+            <h1 id={`${formId}-title`} className="auth-title">
+              {signingUp ? "Create your Runex account" : "Sign in to Runex"}
             </h1>
             <p className="auth-sub">
-              {signingUp
-                ? "Deploy from GitHub or a zip. Builds, containers, and HTTPS are handled for you."
-                : "Sign in to deploy and manage your apps on Runex."}
+              {signingUp ? "Free for 30 days. No card needed." : "Welcome back. Pick up where you left off."}
             </p>
+
+            {emailOpen ? null : errorNote}
 
             <a
               href="/v1/auth/google"
@@ -189,164 +190,139 @@ export function AuthScreen({ mode, oauthError }: { mode: "sign-in" | "sign-up"; 
                 }
                 setLeaving(true);
               }}
-              className="auth-google mt-8 flex min-h-12 w-full items-center justify-center gap-3 rounded-[10px] border border-[#d9d4c6] bg-[#fdfcf8] px-4 py-3 text-[14px] font-medium text-[#26241c] transition-colors hover:border-[#55573f] hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#55573f]"
+              className="auth-google"
             >
-              <svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true" className="shrink-0">
-                <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5Z" />
-                <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65Z" />
-                <path fill="#FBBC05" d="M10.53 28.59A14.41 14.41 0 0 1 9.75 24c0-1.59.27-3.13.78-4.59l-7.98-6.19A23.87 23.87 0 0 0 0 24c0 3.87.93 7.53 2.56 10.78l7.97-6.19Z" />
-                <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.91-5.8l-7.73-6c-2.15 1.45-4.92 2.3-8.18 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48Z" />
-              </svg>
+              <span className="auth-google-mark" aria-hidden="true">
+                <svg width="18" height="18" viewBox="0 0 48 48">
+                  <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5Z" />
+                  <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65Z" />
+                  <path fill="#FBBC05" d="M10.53 28.59A14.41 14.41 0 0 1 9.75 24c0-1.59.27-3.13.78-4.59l-7.98-6.19A23.87 23.87 0 0 0 0 24c0 3.87.93 7.53 2.56 10.78l7.97-6.19Z" />
+                  <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.91-5.8l-7.73-6c-2.15 1.45-4.92 2.3-8.18 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48Z" />
+                </svg>
+              </span>
               {leaving ? "Opening Google…" : "Continue with Google"}
             </a>
-            <div className="my-5 flex items-center gap-3 text-[12px] text-[#55573f]">
-              <span className="h-px flex-1 bg-[#ddd7c8]" aria-hidden="true" />
-              <span>or</span>
-              <span className="h-px flex-1 bg-[#ddd7c8]" aria-hidden="true" />
+
+            <button
+              type="button"
+              className="auth-toggle"
+              aria-expanded={emailOpen}
+              aria-controls={`${formId}-email-panel`}
+              onClick={toggleEmail}
+            >
+              {signingUp ? "Sign up with email" : "Sign in with email instead"}
+              <ChevronDown size={14} strokeWidth={1.75} aria-hidden className="auth-toggle-icon" />
+            </button>
+
+            <div id={`${formId}-email-panel`} className="auth-collapse" data-open={emailOpen ? "" : undefined} inert={!emailOpen}>
+              <div className="auth-collapse-inner">
+                <form className="auth-form" onSubmit={(event) => void onSubmit(event)} noValidate>
+                  {signingUp ? (
+                    <>
+                      <Field
+                        id={`${formId}-username`}
+                        label="Username"
+                        value={username}
+                        autoComplete="username"
+                        enterKeyHint="next"
+                        error={fields.username}
+                        onChange={(value) => setUsername(edit("username")(value))}
+                      />
+                      <Field
+                        id={`${formId}-email`}
+                        label="Email"
+                        type="email"
+                        inputMode="email"
+                        value={email}
+                        autoComplete="email"
+                        enterKeyHint="next"
+                        error={fields.email}
+                        onChange={(value) => setEmail(edit("email")(value))}
+                      />
+                    </>
+                  ) : (
+                    <Field
+                      id={`${formId}-login`}
+                      label="Username or email"
+                      value={loginId}
+                      autoComplete="username"
+                      enterKeyHint="next"
+                      error={fields.login}
+                      onChange={(value) => setLoginId(edit("login")(value))}
+                    />
+                  )}
+
+                  <label className="auth-label" htmlFor={`${formId}-password`}>
+                    Password
+                    <span className="relative">
+                      <input
+                        id={`${formId}-password`}
+                        type={showPassword ? "text" : "password"}
+                        value={password}
+                        autoComplete={signingUp ? "new-password" : "current-password"}
+                        autoCapitalize="none"
+                        autoCorrect="off"
+                        spellCheck={false}
+                        enterKeyHint="go"
+                        aria-invalid={fields.password ? true : undefined}
+                        aria-describedby={fields.password ? `${formId}-password-error` : undefined}
+                        onFocus={revealField}
+                        onChange={(event) => {
+                          setPassword(event.target.value);
+                          setFields((current) => (current.password ? { ...current, password: "" } : current));
+                          if (formError) setFormError("");
+                        }}
+                        className="auth-field pr-11"
+                      />
+                      <button
+                        type="button"
+                        aria-label={showPassword ? "Hide password" : "Show password"}
+                        onClick={() => setShowPassword((current) => !current)}
+                        className="auth-eye"
+                      >
+                        {showPassword ? <EyeOff size={16} strokeWidth={1.75} /> : <Eye size={16} strokeWidth={1.75} />}
+                      </button>
+                    </span>
+                    {fields.password ? (
+                      <span id={`${formId}-password-error`} className="auth-error-text">
+                        {fields.password}
+                      </span>
+                    ) : signingUp ? (
+                      <span className="auth-hint">At least 8 characters, with a letter and a number.</span>
+                    ) : null}
+                  </label>
+
+                  {emailOpen ? errorNote : null}
+
+                  <button
+                    type="submit"
+                    disabled={busy || leaving || session === "in"}
+                    aria-busy={busy || session === "in"}
+                    className="auth-submit"
+                  >
+                    {busy || session === "in"
+                      ? signingUp
+                        ? "Creating account…"
+                        : "Signing in…"
+                      : signingUp
+                        ? "Create account"
+                        : "Sign in"}
+                  </button>
+                </form>
+              </div>
             </div>
 
-            <form className="mt-0" onSubmit={(event) => void onSubmit(event)} noValidate>
-              {signingUp ? (
-                <>
-                  <Field
-                    id={`${formId}-username`}
-                    label="Username"
-                    value={username}
-                    autoComplete="username"
-                    enterKeyHint="next"
-                    error={fields.username}
-                    onChange={(value) => setUsername(edit("username")(value))}
-                  />
-                  <Field
-                    id={`${formId}-email`}
-                    label="Email"
-                    type="email"
-                    inputMode="email"
-                    value={email}
-                    autoComplete="email"
-                    enterKeyHint="next"
-                    error={fields.email}
-                    onChange={(value) => setEmail(edit("email")(value))}
-                  />
-                </>
-              ) : (
-                <Field
-                  id={`${formId}-login`}
-                  label="Username or email"
-                  value={loginId}
-                  autoComplete="username"
-                  enterKeyHint="next"
-                  error={fields.login}
-                  onChange={(value) => setLoginId(edit("login")(value))}
-                />
-              )}
-
-              <label className="mt-4 grid gap-2 text-[13px] font-medium tracking-[-0.011em] text-[#26241c]" htmlFor={`${formId}-password`}>
-                Password
-                <span className="relative">
-                  <input
-                    id={`${formId}-password`}
-                    type={showPassword ? "text" : "password"}
-                    value={password}
-                    autoComplete={signingUp ? "new-password" : "current-password"}
-                    autoCapitalize="none"
-                    autoCorrect="off"
-                    spellCheck={false}
-                    enterKeyHint="go"
-                    aria-invalid={fields.password ? true : undefined}
-                    aria-describedby={fields.password ? `${formId}-password-error` : undefined}
-                    onFocus={revealField}
-                    onChange={(event) => {
-                      setPassword(event.target.value);
-                      setFields((current) => (current.password ? { ...current, password: "" } : current));
-                      if (formError) setFormError("");
-                    }}
-                    className={`${fieldClass} pr-12`}
-                  />
-                  <button
-                    type="button"
-                    aria-label={showPassword ? "Hide password" : "Show password"}
-                    onClick={() => setShowPassword((current) => !current)}
-                    className="absolute top-1/2 right-1 grid size-10 -translate-y-1/2 place-items-center text-[#8a8374] transition-colors hover:text-[#26241c]"
-                  >
-                    {showPassword ? <EyeOff size={16} strokeWidth={1.75} /> : <Eye size={16} strokeWidth={1.75} />}
-                  </button>
-                </span>
-                {fields.password ? (
-                  <span id={`${formId}-password-error`} className="auth-error-text">
-                    {fields.password}
-                  </span>
-                ) : signingUp ? (
-                  <span className="text-[13px] font-normal tracking-[-0.011em] text-[#6d6a5e]">
-                    At least 8 characters, with a letter and a number.
-                  </span>
-                ) : null}
-              </label>
-
-              {formError ? (
-                <p className="auth-error mt-4" role="alert">
-                  {formError}
-                </p>
-              ) : null}
-
-              <button
-                type="submit"
-                disabled={busy || leaving || session === "in"}
-                aria-busy={busy || session === "in"}
-                className="auth-submit mt-7"
-              >
-                {busy || session === "in"
-                  ? signingUp
-                    ? "Creating account…"
-                    : "Signing in…"
-                  : signingUp
-                    ? "Create account"
-                    : "Sign in"}
-              </button>
-            </form>
-
-            <p className="mt-6 text-[14px] leading-5 tracking-[-0.011em] text-[#6d6a5e]">
+            <p className="auth-switch">
               {signingUp ? "Already have an account?" : "New to Runex?"}{" "}
               <Link href={signingUp ? "/sign-in" : "/sign-up"} className="auth-link">
                 {signingUp ? "Sign in" : "Create an account"}
               </Link>
             </p>
-            </div>
-
-            <p className="auth-foot">
-              Need a hand? <a href="mailto:support@runex.cloud">support@runex.cloud</a>
-            </p>
           </section>
 
-          <aside className="auth-art" aria-hidden>
-            {/* eslint-disable-next-line @next/next/no-img-element -- art-directed cover with explicit srcSet */}
-            <img
-              className="auth-art-photo"
-              src="/art/landscape.webp"
-              srcSet="/art/landscape-768.webp 768w, /art/landscape.webp 1152w"
-              sizes="(max-width: 900px) 100vw, 56vw"
-              alt=""
-              width={1152}
-              height={864}
-              fetchPriority="high"
-              decoding="async"
-            />
-            <div className="auth-art-veil" />
-            <div className="auth-art-dots" />
-            <div className="auth-art-copy">
-              <p className="auth-art-title">
-                Your code <em>ships itself</em>
-              </p>
-              <p className="auth-art-sub">
-                From a GitHub push to a live HTTPS URL, with builds, containers, and certificates handled for you.
-              </p>
-            </div>
-            <ul className="auth-art-facts">
-              <li>Push to deploy</li>
-              <li>HTTPS by default</li>
-              <li>Live logs</li>
-            </ul>
-          </aside>
+          <p className="auth-foot">
+            Need a hand? <a href="mailto:support@runex.cloud">support@runex.cloud</a>
+          </p>
         </div>
       </div>
     </main>
@@ -375,7 +351,7 @@ function Field({
   enterKeyHint?: "next" | "go";
 }) {
   return (
-    <label className="mt-4 grid gap-2 text-[13px] font-medium tracking-[-0.011em] text-[#26241c] first:mt-0" htmlFor={id}>
+    <label className="auth-label" htmlFor={id}>
       {label}
       <input
         id={id}
@@ -390,15 +366,12 @@ function Field({
         aria-invalid={error ? true : undefined}
         onFocus={revealField}
         onChange={(event) => onChange(event.target.value)}
-        className={fieldClass}
+        className="auth-field"
       />
       {error ? <span className="auth-error-text">{error}</span> : null}
     </label>
   );
 }
-
-const fieldClass =
-  "auth-field h-12 w-full rounded-[10px] border border-[#e4dfd0] bg-[#fdfcf8] px-3.5 text-base font-normal tracking-[-0.011em] text-[#26241c] outline-none transition-[border-color,box-shadow] duration-200 placeholder:text-[#aeaeb2]";
 
 function revealField(event: FocusEvent<HTMLInputElement>) {
   const target = event.currentTarget;
