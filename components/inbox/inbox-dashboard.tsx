@@ -20,7 +20,6 @@ import { PlatformPage } from "./platform-pages";
 import { ProjectWorkspace } from "@/components/projects/project-workspace";
 import { DashboardShell, useDashboardDrawer } from "./dashboard-drawer";
 import { Sidebar } from "./sidebar";
-import { UpgradeBanner } from "./upgrade-banner";
 import { AccountGates } from "./account-gates";
 import { HOME_WORKSPACE, useWorkspaces, WorkspaceBootProvider } from "@/lib/workspaces";
 import { useSessionWatch } from "@/hooks/use-session-watch";
@@ -151,7 +150,6 @@ function Shell() {
     activeNav === "projects" ||
     activeNav === "pinned" ||
     activeNav === "servers";
-  const showBanner = activeNav === "projects";
 
   const opened = projects.find((project) => project.id === openId) ?? null;
   const cachedName =
@@ -230,7 +228,6 @@ function Shell() {
                 services={visibleOrPreview}
                 faces={bootFaces(boot)}
                 label={listLabel}
-                banner={showBanner ? <UpgradeBanner /> : undefined}
               />
             ) : isPlatform(activeNav) ? (
               <PlatformPage nav={activeNav} />
